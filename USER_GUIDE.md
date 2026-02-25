@@ -55,4 +55,8 @@ This section is dedicated to connecting with MFU APIs.
 - **Reset Database**: (Warning) This will delete all clients and transactions. Use this only for demo purposes or starting fresh.
 
 ---
-*For support or contributions, please check the project repository.*
+## 👑 Project Leadership
+
+This is an open-source project led by its **BDFL (Benevolent Dictator For Life)**, **@rmaries**. 
+
+For support, contributions, or feature requests, please visit the [GitHub repository](https://github.com/rmaries/Open_MFD_CRM).
