@@ -6,10 +6,59 @@ from ui.dashboard import render_dashboard
 def main():
     st.set_page_config(page_title="Open-MFD CRM", layout="wide")
     
-    st.sidebar.title("Open-MFD CRM")
-    menu = ["Dashboard", "Client Management", "Investment Tracking", "MFU Integration", "User Guide", "Settings"]
-    choice = st.sidebar.selectbox("Menu", menu)
-    
+    # Custom CSS for Navbar
+    st.markdown("""
+        <style>
+        [data-testid="stSidebarNav"] {display: none;}
+        .nav-button {
+            width: 100%;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 5px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .nav-button:hover {
+            background-color: #f0f2f6;
+        }
+        .active-nav {
+            background-color: #e6f0ff;
+            color: #0066cc;
+            font-weight: bold;
+            border-left: 5px solid #0066cc;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Initialize session state for navigation
+    if "choice" not in st.session_state:
+        st.session_state.choice = "Dashboard"
+
+    # Sidebar Navigation
+    with st.sidebar:
+        st.title("🚀 Open-MFD")
+        st.caption("v1.0.0 | CRM for MFDs")
+        st.divider()
+        
+        menu_items = {
+            "Dashboard": "🏠",
+            "Client Management": "👤",
+            "Investment Tracking": "📈",
+            "MFU Integration": "🔗",
+            "User Guide": "📖",
+            "Settings": "⚙️"
+        }
+        
+        for item, icon in menu_items.items():
+            if st.button(f"{icon} {item}", use_container_width=True, 
+                         type="primary" if st.session_state.choice == item else "secondary"):
+                st.session_state.choice = item
+                st.rerun()
+
+    choice = st.session_state.choice
     db = Database()
     
     if choice == "Dashboard":
@@ -21,7 +70,7 @@ def main():
         from ui.components import transaction_entry
         transaction_entry(db)
     elif choice == "MFU Integration":
-        st.header("MFU Integration")
+        st.header("🔗 MFU Integration")
         st.info("MFU API Connection logic will be implemented here.")
     elif choice == "User Guide":
         import os
@@ -32,7 +81,7 @@ def main():
         else:
             st.error("User Guide not found.")
     elif choice == "Settings":
-        st.header("Settings")
+        st.header("⚙️ Settings")
         st.write("Database Path:", db.db_path)
         if st.button("Reset Database (Demo)"):
             import os

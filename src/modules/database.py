@@ -1,9 +1,17 @@
 import sqlite3
 import pandas as pd
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class Database:
-    def __init__(self, db_path="open_mfd.db"):
+    def __init__(self, db_path=None):
+        # Check for DB_PATH in environment variables first, then fallback to default
+        if db_path is None:
+            db_path = os.getenv("DB_PATH", "open_mfd.db")
         self.db_path = db_path
         self.init_db()
 
@@ -11,7 +19,8 @@ class Database:
         return sqlite3.connect(self.db_path)
 
     def init_db(self):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             
             # Table A: clients
@@ -19,7 +28,7 @@ class Database:
                 CREATE TABLE IF NOT EXISTS clients (
                     client_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
-                    pan TEXT UNIQUE NOT NULL,
+                    pan TEXT UNIQUE,
                     can_number TEXT,
                     email TEXT,
                     phone TEXT,
@@ -94,40 +103,103 @@ class Database:
                 )
             ''')
             conn.commit()
+        finally:
+            conn.close()
 
     def run_query(self, query, params=None):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             return pd.read_sql(query, conn, params=params)
+        finally:
+            conn.close()
 
     def add_client(self, name, pan, can_number=None, email=None, phone=None, kyc_status=0, pan_card_url=None):
         query = '''
             INSERT INTO clients (name, pan, can_number, email, phone, kyc_status, pan_card_url)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         '''
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (name, pan, can_number, email, phone, kyc_status, pan_card_url))
-            conn.commit()
-            return cursor.lastrowid
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (name, pan, can_number, email, phone, kyc_status, pan_card_url))
+                return cursor.lastrowid
+        finally:
+            conn.close()
+
+    def update_client_kyc(self, client_id, kyc_status):
+        query = 'UPDATE clients SET kyc_status = ? WHERE client_id = ?'
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (1 if kyc_status else 0, client_id))
+        finally:
+            conn.close()
+
+    def update_client_info(self, client_id, name=None, email=None, phone=None, can_number=None, pan=None):
+        """Update client personal information."""
+        updates = []
+        params = []
+        if name:
+            updates.append("name = ?")
+            params.append(name)
+        if email:
+            updates.append("email = ?")
+            params.append(email)
+        if phone:
+            updates.append("phone = ?")
+            params.append(phone)
+        if can_number:
+            updates.append("can_number = ?")
+            params.append(can_number)
+        if pan:
+            updates.append("pan = ?")
+            params.append(pan)
+            
+        if not updates:
+            return
+
+        query = f"UPDATE clients SET {', '.join(updates)} WHERE client_id = ?"
+        params.append(client_id)
+        
+        conn = self.get_connection()
+        try:
+            with conn:
+                conn.execute(query, params)
+        finally:
+            conn.close()
+
+    def get_client_info(self, client_id):
+        """Fetch full details for a single client."""
+        query = "SELECT * FROM clients WHERE client_id = ?"
+        df = self.run_query(query, params=(client_id,))
+        return df.iloc[0].to_dict() if not df.empty else None
 
     def add_folio(self, client_id, folio_number, amc_name):
         query = 'INSERT INTO folios (client_id, folio_number, amc_name) VALUES (?, ?, ?)'
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (client_id, folio_number, amc_name))
-            conn.commit()
-            return cursor.lastrowid
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (client_id, folio_number, amc_name))
+                return cursor.lastrowid
+        finally:
+            conn.close()
 
     def add_transaction(self, folio_id, scheme_id, date, trans_type, amount, units, nav):
         query = '''
             INSERT INTO transactions (folio_id, scheme_id, date, type, amount, units, nav_at_purchase)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         '''
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (folio_id, scheme_id, date, trans_type, amount, units, nav))
-            conn.commit()
-            return cursor.lastrowid
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (folio_id, scheme_id, date, trans_type, amount, units, nav))
+                return cursor.lastrowid
+        finally:
+            conn.close()
             
     def get_all_clients(self):
         return self.run_query("SELECT * FROM clients")
@@ -142,15 +214,30 @@ class Database:
         '''
         return self.run_query(query, params=(client_id,))
 
+    def get_total_metrics(self):
+        """Calculate aggregate metrics across all clients efficiently."""
+        query = '''
+            SELECT SUM(t.units * s.current_nav) as total_aum
+            FROM transactions t
+            JOIN schemes s ON t.scheme_id = s.scheme_id
+        '''
+        df = self.run_query(query)
+        return {
+            "total_aum": float(df['total_aum'].iloc[0]) if not df.empty and df['total_aum'].iloc[0] is not None else 0.0
+        }
+
     # Note Methods
     def add_note(self, investor_id, content, category="General"):
         query = 'INSERT INTO notes (investor_id, content, category, created_at) VALUES (?, ?, ?, ?)'
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (investor_id, content, category, now))
-            conn.commit()
-            return cursor.lastrowid
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (investor_id, content, category, now))
+                return cursor.lastrowid
+        finally:
+            conn.close()
 
     def get_notes(self, investor_id):
         query = 'SELECT * FROM notes WHERE investor_id = ? ORDER BY created_at DESC'
@@ -163,18 +250,24 @@ class Database:
     # Task Methods
     def add_task(self, investor_id, description, due_date, status="Pending", priority="Med"):
         query = 'INSERT INTO tasks (investor_id, description, due_date, status, priority) VALUES (?, ?, ?, ?, ?)'
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (investor_id, description, due_date, status, priority))
-            conn.commit()
-            return cursor.lastrowid
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (investor_id, description, due_date, status, priority))
+                return cursor.lastrowid
+        finally:
+            conn.close()
 
     def update_task_status(self, task_id, status):
         query = 'UPDATE tasks SET status = ? WHERE id = ?'
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(query, (status, task_id))
-            conn.commit()
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (status, task_id))
+        finally:
+            conn.close()
 
     def get_tasks(self, investor_id=None):
         if investor_id:

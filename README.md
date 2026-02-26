@@ -11,8 +11,10 @@ This project follows the **BDFL (Benevolent Dictator For Life)** model.
 As the BDFL, @rmaries has final say over the project's direction, feature prioritization, and core architectural decisions. The goal of this model is to ensure a singular, cohesive vision for the software while welcoming contributions from the community.
 
 ## 🚀 Key Features
+- **Portable Distribution**: No installation required. Runs instantly from a single folder.
+- **Flexible Onboarding**: Add clients with just Name and Phone. PAN is optional.
 - **Portfolio Tracking**: Real-time XIRR and gain calculations for clients.
-- **Client Management**: Seamless PAN-based onboarding.
+- **Client Management**: Edit profile details and KYC status with one click.
 - **Interaction Log**: Contextual notes for every meeting and call.
 - **Task Engine**: Track pending signatures, KYC updates, and annual reviews.
 

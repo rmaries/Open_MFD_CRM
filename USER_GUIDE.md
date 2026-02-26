@@ -17,18 +17,23 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
 - **Client List**: A searchable table of all your clients and their KYC status.
 - **Portfolio & Interaction Center**: Select a specific client to view their detailed profile:
     - **Portfolio**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
-    - **Notes**: A dedicated space for meeting minutes, complaints, or general interaction logs with search capabilities.
-    - **Tasks**: Create and track investor-specific actions (e.g., "Get signature"). Use the **Standard MFD Task** templates for recurring reviews.
+    - **KYC Toggle**: Quickly update a client's KYC verification status.
+    - **Edit Client Profile**: Update Name, PAN, Email, Phone, and CAN details anytime.
+    - **Notes**: A dedicated space for meeting minutes, complaints, or general interaction logs.
+    - **Tasks**: Create and track investor-specific actions. Use the **Standard MFD Task** templates for recurring reviews.
 
 ## 👤 2. Client Management
 
 Use this section to onboard new clients.
 
-- **Full Name**: Enter the name exactly as it appears on the client's PAN card.
-- **PAN**: 10-character Permanent Account Number.
-- **Email/Phone**: Contact details for the client.
-- **MFU CAN**: (Optional) Common Account Number if the client is already registered with MFU.
+- **Full Name \***: Enter the name as it appears in records.
+- **Phone Number \***: Mobile or landline contact.
+- **PAN**: (Optional) 10-character Permanent Account Number.
+- **Email**: (Optional) Contact email address.
+- **MFU CAN**: (Optional) Common Account Number.
 - **Submit**: Click "Onboard Client" to save.
+
+*\* Required fields for onboarding.*
 
 ## 📈 3. Investment Tracking
 
@@ -52,7 +57,20 @@ This section is dedicated to connecting with MFU APIs.
 ## ⚙️ 5. Settings
 
 - View your local database path.
-- **Reset Database**: (Warning) This will delete all clients and transactions. Use this only for demo purposes or starting fresh.
+- **Reset Database**: (Warning) This will delete all clients and transactions.
+
+## 🛠️ 6. Advanced Configuration & Portable Build
+
+### Environment Variables (.env)
+You can customize the application behavior using the `.env` file in the root directory:
+- `DB_PATH`: Specify a custom database file (e.g., `DB_PATH=test_scalability.db`).
+- `MFU_API_KEY`: Your credentials for future MFU integration.
+
+### Portable Distribution
+To create a "no-install" version of the CRM for another computer:
+1. Run `python build_scripts/build_windows.py`.
+2. Find the generated ZIP file in the `dist/` folder.
+3. Extract and run `Start_CRM.bat` on any Windows PC.
 
 ---
 ## 👑 Project Leadership

@@ -10,10 +10,8 @@ def render_dashboard(db):
     clients_df = db.get_all_clients()
     total_clients = len(clients_df)
     
-    total_aum = 0.0
-    for _, client in clients_df.iterrows():
-        metrics = calculate_client_metrics(client['client_id'], db)
-        total_aum += metrics['aum']
+    metrics_summary = db.get_total_metrics()
+    total_aum = metrics_summary['total_aum']
     
     # Overdue Tasks Check
     overdue_tasks = db.get_overdue_tasks()
@@ -47,11 +45,57 @@ def render_dashboard(db):
             
             with tab1:
                 metrics = calculate_client_metrics(selected_client_id, db)
+                
+                # Client Info & KYC Toggle
+                client_data = clients_df[clients_df['client_id'] == selected_client_id].iloc[0]
+                
                 c1, c2, c3, c4 = st.columns(4)
                 c1.metric("Client AUM", f"₹{metrics['aum']:,.2f}")
                 c2.metric("Net Investment", f"₹{metrics['net_investment']:,.2f}")
                 c3.metric("Total Gain", f"₹{metrics['total_gain']:,.2f}")
                 c4.metric("XIRR", f"{metrics['xirr']:.2%}")
+
+                st.divider()
+                
+                k_col1, k_col2 = st.columns([1, 1])
+                with k_col1:
+                    st.write(f"**PAN:** {client_data['pan']}")
+                    st.write(f"**Email:** {client_data.get('email', 'N/A')}")
+                with k_col2:
+                    kyc_status = st.toggle("KYC Verified", value=bool(client_data['kyc_status']), key=f"kyc_{selected_client_id}")
+                    if kyc_status != bool(client_data['kyc_status']):
+                        db.update_client_kyc(selected_client_id, kyc_status)
+                        st.success("KYC status updated!")
+                        st.rerun()
+                
+                # Edit Profile Section
+                with st.expander("📝 Edit Client Profile"):
+                    with st.form(f"edit_profile_{selected_client_id}"):
+                        new_name = st.text_input("Name", value=client_data['name'])
+                        new_pan = st.text_input("PAN", value=client_data['pan'] if client_data['pan'] else "")
+                        new_email = st.text_input("Email", value=client_data['email'] if client_data['email'] else "")
+                        new_phone = st.text_input("Phone", value=client_data['phone'] if client_data['phone'] else "")
+                        new_can = st.text_input("MFU CAN", value=client_data['can_number'] if client_data['can_number'] else "")
+                        
+                        if st.form_submit_button("Update Profile"):
+                            if not new_name or not new_phone:
+                                st.error("Name and Phone are required!")
+                            else:
+                                try:
+                                    db.update_client_info(
+                                        selected_client_id,
+                                        name=new_name,
+                                        pan=new_pan if new_pan else None,
+                                        email=new_email if new_email else None,
+                                        phone=new_phone,
+                                        can_number=new_can if new_can else None
+                                    )
+                                    st.success("Profile updated successfully!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error updating profile: {e}")
+
+                st.divider()
                 
                 st.write("### Portfolio Details")
                 portfolio_df = db.get_client_portfolio(selected_client_id)
