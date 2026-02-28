@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 from modules.database import Database
 from ui.dashboard import render_dashboard
+from ui.client_form import input_client_details
+from ui.transaction_form import transaction_entry
+import shutil
+import os
+from datetime import datetime
 
 def main():
     st.set_page_config(page_title="Open-MFD CRM", layout="wide")
@@ -64,10 +69,8 @@ def main():
     if choice == "Dashboard":
         render_dashboard(db)
     elif choice == "Client Management":
-        from ui.components import input_client_details
         input_client_details(db)
     elif choice == "Investment Tracking":
-        from ui.components import transaction_entry
         transaction_entry(db)
     elif choice == "MFU Integration":
         st.header("🔗 MFU Integration")
@@ -83,11 +86,29 @@ def main():
     elif choice == "Settings":
         st.header("⚙️ Settings")
         st.write("Database Path:", db.db_path)
-        if st.button("Reset Database (Demo)"):
-            import os
+        
+        st.divider()
+        st.subheader("Data Maintenance")
+        st.warning("Critical actions below. Please use with caution.")
+        
+        confirm_reset = st.checkbox("I understand that resetting the database is irreversible.")
+        
+        if st.button("Reset Database (Demo Mode)", disabled=not confirm_reset):
+            # 1. Create a backup first just in case
+            if os.path.exists(db.db_path):
+                backup_dir = "data/backups"
+                os.makedirs(backup_dir, exist_ok=True)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = os.path.join(backup_dir, f"backup_{timestamp}.db")
+                shutil.copy2(db.db_path, backup_path)
+                st.info(f"Backup created at {backup_path}")
+            
+            # 2. Perform reset
             if os.path.exists(db.db_path):
                 os.remove(db.db_path)
-                st.success("Database reset. Please refresh.")
+                st.success("Database reset. Please refresh the page.")
+            else:
+                st.error("Database file not found.")
 
 if __name__ == "__main__":
     main()

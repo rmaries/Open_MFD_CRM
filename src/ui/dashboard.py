@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
 from modules.calculations import calculate_client_metrics
-from ui.components import render_notes_section, render_tasks_section, render_documents_section, render_can_management
+from ui.notes_view import render_notes_section
+from ui.tasks_view import render_tasks_section
+from ui.documents_view import render_documents_section
+from ui.can_management import render_can_management
 
 def render_dashboard(db):
     st.title("Distributor Dashboard")

@@ -2,28 +2,23 @@ import pandas as pd
 import numpy as np
 import numpy_financial as npf
 from scipy.optimize import newton
+import streamlit as st # Assuming streamlit is used for UI based on the new function
 
-def calculate_aum(client_id, db):
-    """Calculate Total Assets Under Management for a client."""
-    query = '''
-        SELECT t.units, s.current_nav
-        FROM transactions t
-        JOIN folios f ON t.folio_id = f.folio_id
-        JOIN client_cans cc ON f.can_id = cc.id
-        JOIN schemes s ON t.scheme_id = s.scheme_id
-        WHERE cc.client_id = ?
-    '''
-    df = db.run_query(query, params=(client_id,))
+def calculate_aum(df: pd.DataFrame) -> float:
+    """
+    Calculates the current Assets Under Management (AUM).
+    Logic: Sum of (Units * Current NAV) for each transaction.
+    A positive unit indicates a purchase, negative indicates a redemption.
+    """
     if df.empty:
         return 0.0
-    
-    # Simple sum of (units * current_nav) across all transactions
-    # Note: This assumes current holdings = sum of all transaction units (Buys positive, Sells negative)
-    df['value'] = df['units'] * df['current_nav']
-    return float(df['value'].sum())
+    return (df['units'] * df['current_nav']).sum()
 
 def xirr(cashflows, dates):
-    """Calculate XIRR for a sequence of cashflows and dates."""
+    """
+    Calculate XIRR for a sequence of cashflows and dates.
+    Standard financial math using Newton-Raphson optimization.
+    """
     def xnpv(rate, cashflows, dates):
         d0 = dates[0]
         return sum([cf / (1 + rate)**((d - d0).days / 365.25) for cf, d in zip(cashflows, dates)])
@@ -33,60 +28,55 @@ def xirr(cashflows, dates):
     except (RuntimeError, OverflowError):
         return None
 
-def calculate_client_metrics(client_id, db):
-    """Calculate comprehensive metrics for a client."""
-    # 1. Fetch Transactions
-    query = '''
-        SELECT t.date, t.amount, t.type, t.units, s.current_nav
-        FROM transactions t
-        JOIN folios f ON t.folio_id = f.folio_id
-        JOIN client_cans cc ON f.can_id = cc.id
-        JOIN schemes s ON t.scheme_id = s.scheme_id
-        WHERE cc.client_id = ?
-    '''
-    df = db.run_query(query, params=(client_id,))
+def calculate_client_metrics(df: pd.DataFrame) -> dict:
+    """
+    Computes a comprehensive performance summary for a client's portfolio.
+    Returns AUM, Net Investment, Total Gain/Loss, and XIRR.
+    """
+    metrics = {
+        "aum": 0.0,
+        "net_investment": 0.0,
+        "total_gain": 0.0,
+        "xirr": 0.0
+    }
+    
     if df.empty:
-        return {"aum": 0.0, "net_investment": 0.0, "total_gain": 0.0, "xirr": 0.0}
+        return metrics
 
+    # Ensure 'date' column is datetime for calculations
     df['date'] = pd.to_datetime(df['date'])
+
+    # 1. Assets Under Management (Current Value)
+    # This is the current market value of all holdings.
+    metrics["aum"] = calculate_aum(df)
     
-    # 2. AUM
-    current_value = float((df['units'] * df['current_nav']).sum())
+    # 2. Net Investment (Total Inflow - Total Outflow)
+    # We use the 'amount' field which is the cost/proceeds of each transaction.
+    # Purchases/SIP are positive inflows, Redemptions/SWP are negative outflows.
+    metrics["net_investment"] = df['amount'].sum()
     
-    # 3. Net Investment
-    # Purchases are positive amounts in DB, Redemptions should be treated as outflows
-    # For AUM/Gains, Net Investment = Total Invested - Total Withdrawn
-    invested = df[df['type'].isin(['PURCHASE', 'SIP'])]['amount'].sum()
-    withdrawn = df[df['type'].isin(['REDEMPTION', 'SWP'])]['amount'].sum()
-    net_investment = float(invested - withdrawn)
+    # 3. Total Unrealized + Realized Gain
+    # This is the difference between current AUM and the net amount invested.
+    metrics["total_gain"] = metrics["aum"] - metrics["net_investment"]
     
-    # 4. Total Gain
-    total_gain = current_value - net_investment
-    
-    # 5. XIRR Preparation
-    # Cashflows: Investments are negative (money going out), Redemptions are positive (money coming in)
-    # Final value is a positive cashflow today
+    # 4. XIRR Calculation
+    # XIRR requires a series of cashflows and corresponding dates.
+    # Inflows (money going out of pocket, e.g., purchases) are negative.
+    # Outflows (money coming into pocket, e.g., redemptions) are positive.
     cashflows = []
     dates = []
     
     for _, row in df.iterrows():
-        # If Purchase/SIP -> Money flows OUT of pocket (-ve)
         if row['type'] in ['PURCHASE', 'SIP']:
-            cashflows.append(-row['amount'])
-        # If Redemption/SWP -> Money flows IN (+ve)
-        else:
-            cashflows.append(row['amount'])
+            cashflows.append(-row['amount']) # Investment is a negative cashflow
+        elif row['type'] in ['REDEMPTION', 'SWP']:
+            cashflows.append(row['amount']) # Redemption is a positive cashflow
         dates.append(row['date'])
         
-    # Append current value as a positive cashflow today
-    cashflows.append(current_value)
+    # Terminal cashflow: Current AUM is treated as a positive cashflow today
+    cashflows.append(metrics["aum"])
     dates.append(pd.Timestamp.now())
     
     client_xirr = xirr(cashflows, dates)
     
-    return {
-        "aum": current_value,
-        "net_investment": net_investment,
-        "total_gain": total_gain,
-        "xirr": client_xirr if client_xirr else 0.0
     }
