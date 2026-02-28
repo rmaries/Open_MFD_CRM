@@ -10,3 +10,4 @@ ENV/
 build/
 dist/
 *.db
+data/
