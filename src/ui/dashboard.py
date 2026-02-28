@@ -44,7 +44,7 @@ def render_dashboard(db):
                                         format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0])
         
         if selected_client_id:
-            tab1, tab2, tab3, tab4 = st.tabs(["Portfolio & CANs", "Notes", "Tasks", "Documents"])
+            tab1, tab2, tab3, tab4 = st.tabs(["Portfolio", "Notes", "Tasks", "Documents"])
             
             # Pre-fetch client data for all tabs to use
             client_data = clients_df[clients_df['client_id'] == selected_client_id].iloc[0]

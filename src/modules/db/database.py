@@ -1,5 +1,6 @@
 import os
-from dotenv import load_dotenv
+import base64
+from dotenv import load_dotenv, set_key
 from .schema import SchemaManager
 from .clients import ClientRepository
 from .folios import FolioRepository
@@ -7,30 +8,38 @@ from .transactions import TransactionRepository
 from .notes import NoteRepository
 from .tasks import TaskRepository
 from .documents import DocumentRepository
+from .encryption import EncryptionMixin
 
 from cryptography.fernet import Fernet
+
 # Load environment variables
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), ".env")
+load_dotenv(dotenv_path)
 
 class Database:
     """
     Facade class that composes all modularized repositories.
-    Maintains 100% backward compatibility for the existing codebase.
+    Requires an encryption key (derived from password) for initialization.
     """
-    def __init__(self, db_path=None):
+    def __init__(self, db_path=None, key=None):
         if db_path is None:
             db_path = os.getenv("DB_PATH", "open_mfd.db")
         self.db_path = db_path
         
-        # Consistent Key Management
-        # We fetch the key once here. If missing, we generate one to share across all repositories.
-        self.key = os.getenv("FERNET_KEY")
-        if not self.key:
-            self.key = Fernet.generate_key().decode()
-            # We don't print warning here to avoid terminal clutter in tests, 
-            # EncryptionMixin will handle it if it still thinks it's missing (it won't).
+        # Salt Management for KDF
+        self.salt = self._get_or_create_salt()
         
-        # Initialize Sub-Repositories
+        # Encryption Key Management
+        # In the new password-based flow, the key MUST be provided explicitly from the UI.
+        # We only fallback to .env for backward compatibility during transition or tests.
+        self.key = key or os.getenv("FERNET_KEY")
+        
+        if not self.key:
+            # If no key is provided, repositories will be initialized with a dummy key
+            # but encryption/decryption will fail. This allows the app to load the "Unlock" screen.
+            self.key = Fernet.generate_key().decode()
+
+        # Initialize Sub-Repositories with the shared key
         self.schema = SchemaManager(db_path)
         self.clients = ClientRepository(db_path, key=self.key)
         self.folios = FolioRepository(db_path)
@@ -41,6 +50,16 @@ class Database:
         
         # Initialize database schema
         self.schema.init_db()
+
+    def _get_or_create_salt(self) -> bytes:
+        """Retrieves the persistent salt from .env or generates a new one."""
+        salt_str = os.getenv("FERNET_SALT")
+        if not salt_str:
+            salt = os.urandom(16)
+            salt_str = base64.b64encode(salt).decode()
+            set_key(dotenv_path, "FERNET_SALT", salt_str)
+            return salt
+        return base64.b64decode(salt_str)
 
     # --- Schema/Connection Passthroughs ---
     def get_connection(self):
