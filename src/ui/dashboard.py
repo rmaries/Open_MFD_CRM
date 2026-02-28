@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from modules.calculations import calculate_client_metrics
-from ui.components import render_notes_section, render_tasks_section
+from ui.components import render_notes_section, render_tasks_section, render_documents_section, render_can_management
 
 def render_dashboard(db):
     st.title("Distributor Dashboard")
@@ -41,7 +41,7 @@ def render_dashboard(db):
                                         format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0])
         
         if selected_client_id:
-            tab1, tab2, tab3 = st.tabs(["Portfolio", "Notes", "Tasks"])
+            tab1, tab2, tab3, tab4, tab5 = st.tabs(["Portfolio", "Notes", "Tasks", "Documents", "CAN Numbers"])
             
             with tab1:
                 metrics = calculate_client_metrics(selected_client_id, db)
@@ -109,5 +109,11 @@ def render_dashboard(db):
                 
             with tab3:
                 render_tasks_section(db, selected_client_id)
+                
+            with tab4:
+                render_documents_section(db, selected_client_id)
+
+            with tab5:
+                render_can_management(db, selected_client_id)
     else:
         st.info("No clients onboarded yet. Go to 'Client Management' to add your first client.")

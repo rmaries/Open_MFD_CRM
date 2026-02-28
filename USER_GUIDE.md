@@ -18,9 +18,14 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
 - **Portfolio & Interaction Center**: Select a specific client to view their detailed profile:
     - **Portfolio**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
     - **KYC Toggle**: Quickly update a client's KYC verification status.
-    - **Edit Client Profile**: Update Name, PAN, Email, Phone, and CAN details anytime.
+    - **Edit Client Profile**: Update Name, PAN, Email, and Phone details.
     - **Notes**: A dedicated space for meeting minutes, complaints, or general interaction logs.
-    - **Tasks**: Create and track investor-specific actions. Use the **Standard MFD Task** templates for recurring reviews.
+    - **Tasks**: Create and track investor-specific actions.
+    - **Documents**: Securely upload, view (images/PDFs), and manage client files (Encrypted on disk).
+    - **CAN Numbers**: Manage multiple Common Account Numbers for the same client.
+        - The CAN entered during onboarding is **automatically** included here.
+        - Click **"➕ Add New CAN Number"** to add additional CANs.
+        - Click the **🗑️** icon next to any CAN to remove it.
 
 ## 👤 2. Client Management
 
@@ -64,6 +69,9 @@ This section is dedicated to connecting with MFU APIs.
 ### Environment Variables (.env)
 You can customize the application behavior using the `.env` file in the root directory:
 - `DB_PATH`: Specify a custom database file (e.g., `DB_PATH=test_scalability.db`).
+- `FERNET_KEY`: The master encryption key for securing sensitive data (Auto-generated if missing).
+
+  > ⚠️ **Important**: Back up this key securely. If it is lost, all encrypted client data and uploaded documents **cannot be recovered**.
 - `MFU_API_KEY`: Your credentials for future MFU integration.
 
 ### Portable Distribution

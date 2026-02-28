@@ -6,3 +6,4 @@ plotly>=5.18.0
 requests>=2.31.0
 pyinstaller>=6.3.0
 numpy-financial>=1.0.0
+cryptography>=42.0.0
