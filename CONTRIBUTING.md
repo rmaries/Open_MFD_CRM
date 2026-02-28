@@ -24,10 +24,11 @@ This project follows the **BDFL (Benevolent Dictator For Life)** model. All fina
 
 ## 🎨 Coding Standards
 
-- **Python**: Follow PEP 8 guidelines for clean code.
-- **Streamlit**: Keep UI logic separated into `src/ui/components.py` and business logic in `src/modules/`.
-- **Security**: Never store sensitive data in plain text. Always use the `Database._encrypt` and `Database._decrypt` methods.
-- **Consistency**: Use the existing design language (Streamlit columns, metrics, and containers) to keep the UI feel cohesive.
+- **Python**: Follow PEP 8 guidelines. Document all new repository methods with docstrings.
+- **UI Logic**: Keep UI components granular. New features should have their own file in `src/ui/`.
+- **Business Logic**: Decouple SQL from math. SQL goes in `src/modules/db/`, calculations go in `src/modules/calculations.py`.
+- **Security**: Use specialized repositories that inherit from `EncryptionMixin` for sensitive fields.
+- **Consistency**: Avoid magic strings; use Enums in `src/modules/constants.py`.
 
 ## 🛡️ License
 

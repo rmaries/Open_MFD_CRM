@@ -15,17 +15,24 @@ Open-MFD is built as a lightweight, portable Python application using the follow
 
 ```text
 open_mfd_crm/
-├── data/               # Local data storage (DB, documents)
+├── data/               # Local data storage (DB, backups, documents)
 ├── src/
-│   ├── modules/        # Core business logic & DB interface
-│   │   ├── database.py     # Main DB wrapper & Encryption logic
-│   │   └── calculations.py # Financial/Portfolio math
-│   ├── ui/             # Streamlit UI components
-│   │   ├── dashboard.py    # Main landing page logic
-│   │   └── components.py   # Reusable UI fragments
+│   ├── modules/        # Core business logic & specialized DB modules
+│   │   ├── db/             # Experimental: Domain-specific repositories
+│   │   │   ├── clients.py      # Client & CAN CRUD
+│   │   │   ├── transactions.py # Trade logging & portfolio fetches
+│   │   │   ├── encryption.py   # Fernet encryption mixin
+│   │   │   └── schema.py       # DDL and Migrations
+│   │   ├── database.py     # Backward-compatible Facade (entry point)
+│   │   ├── calculations.py # Pure financial/portfolio math
+│   │   └── constants.py    # Shared Enums (TransactionType, Status, etc.)
+│   ├── ui/             # Modular Streamlit components
+│   │   ├── dashboard.py    # Main landing page orchestration
+│   │   ├── client_form.py  # Onboarding UI
+│   │   ├── transaction_form.py # Trade entry UI
+│   │   └── components.py   # Re-export shim for legacy compatibility
 │   └── app.py          # Application entry point
-├── build_scripts/      # Scripts for creating portable builds
-├── .env                # Environment configuration (Keys, Paths)
+├── .env                # Environment configuration
 └── requirements.txt    # Python dependencies
 ```
 
@@ -55,11 +62,23 @@ python src/app.py
 
 ## 🔐 Security & Encryption
 
-Open-MFD uses **Field-Level Encryption** for sensitive data:
-- **Database**: Fields like PAN, Email, Phone, and CAN are encrypted before being stored in SQLite.
-- **Documents**: File contents are encrypted using the same `FERNET_KEY` before being saved to the `data/documents/` folder.
+Open-MFD uses **Field-Level Encryption** centered in the `EncryptionMixin`:
+- **Database Layer**: Repositories like `ClientRepository` use `_encrypt()` before `INSERT`.
+- **File Layer**: `DocumentRepository` encrypts binary content before writing to `data/documents/`.
+- **Fallback**: The `_decrypt()` method includes logic to return plain text if decryption fails, supporting legacy data gracefully.
 
 **Important**: Never commit your `.env` file or hardcode keys.
+
+## 🏛️ Core Design Patterns
+
+### 1. Repository Pattern
+Instead of a single SQL file, logic is split by domain (clients, transactions, tasks, etc.) inside `src/modules/db/`. Each repository inherits from `BaseRepository` for connection handling.
+
+### 2. Facade Pattern
+`src/modules/database.py` acts as a single entry point (Facade). It composes all specialized repositories, allowing legacy code to call `db.add_client()` without knowing it's delegated to `db.clients.add_client()`.
+
+### 3. Pure Math Logic
+`src/modules/calculations.py` contains **no SQL**. It accepts DataFrames from the `TransactionRepository` and returns mathematical results, making it easy to unit test.
 
 ## 🗃️ Database Schema Design
 
@@ -147,7 +166,8 @@ We use `PyInstaller` (via scripts in `build_scripts/`) to create "no-install" po
 ## 🧪 Testing
 
 We use separate verification scripts for testing core modules:
-- `test_vault.py`: Verifies encryption and document storage.
-- `test_multiple_cans.py`: Verifies the multi-CAN logic and migration.
+- `test_db.py`: Verifies the Repository/Facade integrity and backward compatibility.
+- `test_calc.py`: Verifies financial calculations using mock DataFrames.
+- `test_scalability.py`: Stress tests the DB layer with thousands of records.
 
 Always run these tests before submitting a Pull Request.
