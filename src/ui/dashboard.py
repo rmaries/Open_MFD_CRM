@@ -46,17 +46,10 @@ def render_dashboard(db):
         if selected_client_id:
             tab1, tab2, tab3, tab4 = st.tabs(["Portfolio & CANs", "Notes", "Tasks", "Documents"])
             
+            # Pre-fetch client data for all tabs to use
+            client_data = clients_df[clients_df['client_id'] == selected_client_id].iloc[0]
+
             with tab1:
-                # Use modularized fetch + pure calculation with optional CAN filtering
-                # This needs to be moved AFTER CAN selection, so we will use a placeholder or restructure.
-                # Actually, the metrics display needs the selected CAN. Let's restructure the UI layout.
-                pass # Replaced below along with the portfolio details.
-
-
-                st.divider()
-                
-                st.divider()
-                
                 k_col1, k_col2 = st.columns([1, 1])
                 with k_col1:
                     st.write(f"**PAN:** {client_data['pan']}")
