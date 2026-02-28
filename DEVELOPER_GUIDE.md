@@ -109,7 +109,8 @@ erDiagram
     CLIENT_CANS {
         integer id PK
         integer client_id FK
-        string can_number "Encrypted"
+        string can_number
+        string can_description
         timestamp created_at
     }
 
@@ -153,7 +154,8 @@ erDiagram
 ### Table Definitions & Logic
 
 1.  **`clients`**: The central entity. Sensitive fields (PAN, Email, Phone) are encrypted at rest. All CAN numbers are managed via the `client_cans` table.
-2.  **`client_cans`**: Holds one or more CAN numbers per client (all encrypted). Each CAN can independently own folios.
+2.  **`client_cans`**: Stores multiple CANs per client. Includes a `can_description` for labeling.
+ (all encrypted). Each CAN can independently own folios.
 3.  **`folios`**: Belongs to a **specific CAN** (`can_id` FK → `client_cans.id`), not directly to a client. This reflects the real-world MFU model where a folio is registered under a CAN.
 4.  **`schemes`**: A master list of Mutual Fund schemes. Transactions reference these to avoid data duplication and ensure consistent naming.
 5.  **`transactions`**: The ledger of all financial movements. It links a specific `scheme` to a specific `folio`.

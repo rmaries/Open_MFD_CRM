@@ -119,16 +119,16 @@ class ClientRepository(EncryptionMixin, BaseRepository):
         finally:
             conn.close()
 
-    def add_client_can(self, client_id, can_number):
+    def add_client_can(self, client_id, can_number, can_description=None):
         """Registers an additional CAN number for a client."""
         if not can_number: return None
-        query = 'INSERT INTO client_cans (client_id, can_number) VALUES (?, ?)'
+        query = 'INSERT INTO client_cans (client_id, can_number, can_description) VALUES (?, ?, ?)'
         enc_can = self._encrypt(can_number)
         conn = self.get_connection()
         try:
             with conn:
                 cursor = conn.cursor()
-                cursor.execute(query, (client_id, enc_can))
+                cursor.execute(query, (client_id, enc_can, can_description))
                 return cursor.lastrowid
         finally:
             conn.close()

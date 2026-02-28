@@ -162,12 +162,14 @@ class SchemaManager(BaseRepository):
             # id: Primary key, unique identifier for each CAN record.
             # client_id: Foreign key referencing the clients table, linking a CAN to a specific client.
             # can_number: The actual CAN number.
+            # can_description: Optional label or context for this CAN (e.g., "Primary", "Joint Holder").
             # created_at: Timestamp when the CAN record was created.
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS client_cans (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     client_id INTEGER,
                     can_number TEXT NOT NULL,
+                    can_description TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (client_id) REFERENCES clients (client_id)
                 )
@@ -188,6 +190,20 @@ class SchemaManager(BaseRepository):
         self._migrate_cans_to_table()
         self._migrate_folios_to_cans()
         self._revert_notes_tasks_linkage()
+        self._add_can_description_to_client_cans()
+
+    def _add_can_description_to_client_cans(self):
+        """Adds can_description column to client_cans table if it doesn't exist."""
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(client_cans)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'can_description' not in columns:
+                cursor.execute("ALTER TABLE client_cans ADD COLUMN can_description TEXT")
+            conn.commit()
+        finally:
+            conn.close()
 
     def _migrate_cans_to_table(self):
         """
