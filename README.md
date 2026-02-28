@@ -30,4 +30,13 @@ Detailed usage instructions can be found in the [USER_GUIDE.md](USER_GUIDE.md).
 - **Finance Logic**: Pandas & NumPy Financial
 
 ---
+## ⚠️ Disclaimer
+
+> **This project is vibe-coded.** It has **not been fully tested** and is provided as-is for personal and experimental use only.
+>
+> **Use at your own risk.** The maintainers and contributors are **not responsible** for any errors, data loss, security vulnerabilities, or financial losses caused by the use of this software.
+>
+> Always verify critical financial data independently before making investment decisions.
+
+---
 *Created and maintained by the MFD community for MFDs.*
