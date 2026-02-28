@@ -90,8 +90,10 @@ Open-MFD uses a relational schema designed to maintain clean separation between 
 erDiagram
     CLIENTS ||--o{ CLIENT_CANS : "has multiple"
     CLIENTS ||--o{ DOCUMENTS : "uploads"
-    CLIENTS ||--o{ NOTES : "logs"
-    CLIENTS ||--o{ TASKS : "assigned"
+    CLIENTS ||--o{ NOTES : "linked to"
+    CLIENTS ||--o{ TASKS : "assigned to"
+    CLIENT_CANS ||--o{ NOTES : "linked to"
+    CLIENT_CANS ||--o{ TASKS : "assigned to"
     CLIENT_CANS ||--o{ FOLIOS : "owns"
     FOLIOS ||--o{ TRANSACTIONS : "contains"
     SCHEMES ||--o{ TRANSACTIONS : "referenced in"
@@ -139,6 +141,25 @@ erDiagram
         string category
         float current_nav
     }
+
+    NOTES {
+        integer id PK
+        integer client_id FK "Nullable"
+        integer can_id FK "Nullable"
+        string content
+        string category
+        timestamp created_at
+    }
+
+    TASKS {
+        integer id PK
+        integer client_id FK "Nullable"
+        integer can_id FK "Nullable"
+        string description
+        date due_date
+        string status
+        string priority
+    }
 ```
 
 ### Table Definitions & Logic
@@ -148,8 +169,10 @@ erDiagram
 3.  **`folios`**: Belongs to a **specific CAN** (`can_id` FK → `client_cans.id`), not directly to a client. This reflects the real-world MFU model where a folio is registered under a CAN.
 4.  **`schemes`**: A master list of Mutual Fund schemes. Transactions reference these to avoid data duplication and ensure consistent naming.
 5.  **`transactions`**: The ledger of all financial movements. It links a specific `scheme` to a specific `folio`.
-6.  **`documents`**: Stores metadata for files. The `file_path` points to the `data/documents/` directory where the **encrypted binary content** is stored.
-7.  **`notes` & `tasks`**: CRM interaction data. `notes` tracks meeting logs while `tasks` manages the workflow for signatures and reviews.
+6.  **`documents`**: Stores metadata for files.
+7.  **`notes` & `tasks`**: CRM interaction data. 
+    - **Multi-Linkage**: Both tables include nullable `client_id` and `can_id` foreign keys.
+    - **Constraint**: A SQL `CHECK` constraint ensures that **at least one** of these two IDs must be non-null, preventing "orphaned" records while allowing flexibility (e.g., a note relevant to a specific CAN vs. a general client-level note).
 
 ### 🔐 Multi-Layer Encryption Strategy
 

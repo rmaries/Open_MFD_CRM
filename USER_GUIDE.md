@@ -25,6 +25,7 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
     - **CAN Numbers**: Manage multiple Common Account Numbers for the same client.
         - The CAN entered during onboarding is **automatically** included here.
         - Click **"➕ Add New CAN Number"** to add additional CANs.
+        - **CAN-specific Interactions**: Each CAN now has its own tabs for **Notes** and **Tasks**, allowing you to log interactions or schedule reviews for specific account numbers independently of the main client profile.
         - Click the **🗑️** icon next to any CAN to remove it.
 
 ## 👤 2. Client Management

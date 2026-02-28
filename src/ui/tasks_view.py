@@ -7,12 +7,15 @@ def render_tasks_section(db, client_id=None, can_id=None):
     """
     st.subheader("Task Management")
 
+    # Create a unique prefix for keys based on the entity type
+    prefix = f"can_{can_id}" if can_id else f"client_{client_id}"
+
     # 1. Custom Task Creation
     with st.expander("Add New Task"):
-        with st.form(f"new_task_form_{client_id or can_id}", clear_on_submit=True):
-            desc = st.text_input("Task Description")
-            due_date = st.date_input("Due Date")
-            priority = st.selectbox("Priority", ["High", "Med", "Low"], index=1)
+        with st.form(f"new_task_form_{prefix}", clear_on_submit=True):
+            desc = st.text_input("Task Description", key=f"task_desc_in_{prefix}")
+            due_date = st.date_input("Due Date", key=f"task_due_in_{prefix}")
+            priority = st.selectbox("Priority", ["High", "Med", "Low"], index=1, key=f"task_pri_in_{prefix}")
             if st.form_submit_button("Create Task"):
                 if desc:
                     db.add_task(client_id=client_id, can_id=can_id, description=desc, 
@@ -26,9 +29,9 @@ def render_tasks_section(db, client_id=None, can_id=None):
     with st.expander("Schedule Standard MFD Task"):
         col1, col2 = st.columns([2, 1])
         with col1:
-            task_type = st.selectbox("Standard Task Type", ["Annual Portfolio Review", "Quarterly KYC Update", "Nomination Review"])
+            task_type = st.selectbox("Standard Task Type", ["Annual Portfolio Review", "Quarterly KYC Update", "Nomination Review"], key=f"std_task_type_{prefix}")
         with col2:
-            if st.button("Schedule Now", key=f"std_task_btn_{client_id or can_id}"):
+            if st.button("Schedule Now", key=f"std_task_btn_{prefix}"):
                 if task_type == "Annual Portfolio Review":
                     due = datetime.now().replace(year=datetime.now().year + 1)
                 elif task_type == "Quarterly KYC Update":
