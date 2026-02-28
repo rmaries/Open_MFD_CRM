@@ -105,10 +105,9 @@ class SchemaManager(BaseRepository):
                 )
             ''')
 
-            # Notes table: Stores general notes or remarks related to investors (Client or CAN).
+            # Notes table: Stores general notes or remarks related to clients.
             # id: Primary key.
-            # client_id: Foreign key referencing clients table (nullable).
-            # can_id: Foreign key referencing client_cans table (nullable).
+            # client_id: Foreign key referencing clients table.
             # content: The actual text content.
             # category: Category of the note.
             # created_at: Timestamp.
@@ -116,34 +115,27 @@ class SchemaManager(BaseRepository):
                 CREATE TABLE IF NOT EXISTS notes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     client_id INTEGER,
-                    can_id INTEGER,
                     content TEXT NOT NULL,
                     category TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (client_id) REFERENCES clients (client_id),
-                    FOREIGN KEY (can_id) REFERENCES client_cans (id),
-                    CHECK (client_id IS NOT NULL OR can_id IS NOT NULL)
+                    FOREIGN KEY (client_id) REFERENCES clients (client_id)
                 )
             ''')
 
-            # Tasks table: Manages tasks associated with Client or CAN.
+            # Tasks table: Manages tasks associated with clients.
             # id: Primary key.
-            # client_id: Foreign key referencing clients (nullable).
-            # can_id: Foreign key referencing client_cans (nullable).
+            # client_id: Foreign key referencing clients.
             # description: Details of the task.
             # ...
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS tasks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     client_id INTEGER,
-                    can_id INTEGER,
                     description TEXT NOT NULL,
                     due_date DATE,
                     status TEXT CHECK(status IN ('Pending', 'In Progress', 'Completed', 'Cancelled')) DEFAULT 'Pending',
                     priority TEXT CHECK(priority IN ('High', 'Med', 'Low')) DEFAULT 'Med',
-                    FOREIGN KEY (client_id) REFERENCES clients (client_id),
-                    FOREIGN KEY (can_id) REFERENCES client_cans (id),
-                    CHECK (client_id IS NOT NULL OR can_id IS NOT NULL)
+                    FOREIGN KEY (client_id) REFERENCES clients (client_id)
                 )
             ''')
 
@@ -193,7 +185,9 @@ class SchemaManager(BaseRepository):
         """
         self._migrate_cans_to_table()
         self._migrate_folios_to_cans()
-        self._migrate_notes_tasks_linkage()
+        self._migrate_cans_to_table()
+        self._migrate_folios_to_cans()
+        self._revert_notes_tasks_linkage()
 
     def _migrate_cans_to_table(self):
         """
@@ -250,39 +244,70 @@ class SchemaManager(BaseRepository):
         finally:
             conn.close()
 
-    def _migrate_notes_tasks_linkage(self):
-        """Migrates investor_id to client_id for notes and tasks if columns exist."""
+    def _revert_notes_tasks_linkage(self):
+        """Reverts notes and tasks tables to link only to clients, removing can_id."""
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
             
-            # Migrate Notes
+            # Revert Notes
             cursor.execute("PRAGMA table_info(notes)")
             columns = [row[1] for row in cursor.fetchall()]
-            if 'investor_id' in columns:
-                # SQLite ALTER RENAME is tricky, we'll do the simple copy-and-recreate method if needed
-                # But if we just added columns via _create_tables, they might not be there yet?
-                # Actually _create_tables uses IF NOT EXISTS, so if table existed, it won't change.
-                # We need to manually add columns if they don't exist.
-                if 'client_id' not in columns:
-                    cursor.execute("ALTER TABLE notes ADD COLUMN client_id INTEGER REFERENCES clients(client_id)")
-                if 'can_id' not in columns:
-                    cursor.execute("ALTER TABLE notes ADD COLUMN can_id INTEGER REFERENCES client_cans(id)")
+            if 'can_id' in columns:
+                # Migrate any CAN-linked records to their client parent first
+                cursor.execute("""
+                    UPDATE notes 
+                    SET client_id = (SELECT client_id FROM client_cans WHERE id = notes.can_id)
+                    WHERE client_id IS NULL AND can_id IS NOT NULL
+                """)
                 
-                cursor.execute("UPDATE notes SET client_id = investor_id WHERE client_id IS NULL AND investor_id IS NOT NULL")
-                # We can't easily drop a column in SQLite without recreating the table, 
-                # but we can leave investor_id for now or do the full recreation.
-            
-            # Migrate Tasks
+                # Recreate table without can_id
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS notes_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        client_id INTEGER,
+                        content TEXT NOT NULL,
+                        category TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (client_id) REFERENCES clients (client_id)
+                    )
+                ''')
+                cursor.execute('''
+                    INSERT INTO notes_new (id, client_id, content, category, created_at)
+                    SELECT id, client_id, content, category, created_at FROM notes
+                ''')
+                cursor.execute("DROP TABLE notes")
+                cursor.execute("ALTER TABLE notes_new RENAME TO notes")
+
+            # Revert Tasks
             cursor.execute("PRAGMA table_info(tasks)")
             columns = [row[1] for row in cursor.fetchall()]
-            if 'investor_id' in columns:
-                if 'client_id' not in columns:
-                    cursor.execute("ALTER TABLE tasks ADD COLUMN client_id INTEGER REFERENCES clients(client_id)")
-                if 'can_id' not in columns:
-                    cursor.execute("ALTER TABLE tasks ADD COLUMN can_id INTEGER REFERENCES client_cans(id)")
+            if 'can_id' in columns:
+                # Migrate any CAN-linked records to their client parent first
+                cursor.execute("""
+                    UPDATE tasks 
+                    SET client_id = (SELECT client_id FROM client_cans WHERE id = tasks.can_id)
+                    WHERE client_id IS NULL AND can_id IS NOT NULL
+                """)
                 
-                cursor.execute("UPDATE tasks SET client_id = investor_id WHERE client_id IS NULL AND investor_id IS NOT NULL")
+                # Recreate table without can_id
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS tasks_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        client_id INTEGER,
+                        description TEXT NOT NULL,
+                        due_date DATE,
+                        status TEXT DEFAULT 'Pending',
+                        priority TEXT DEFAULT 'Med',
+                        FOREIGN KEY (client_id) REFERENCES clients (client_id)
+                    )
+                ''')
+                cursor.execute('''
+                    INSERT INTO tasks_new (id, client_id, description, due_date, status, priority)
+                    SELECT id, client_id, description, due_date, status, priority FROM tasks
+                ''')
+                cursor.execute("DROP TABLE tasks")
+                cursor.execute("ALTER TABLE tasks_new RENAME TO tasks")
             
             conn.commit()
         finally:

@@ -29,15 +29,5 @@ def render_can_management(db, client_id):
                     if st.button("🗑️", key=f"del_can_{can['id']}"):
                         db.delete_client_can(can['id'])
                         st.rerun()
-                
-                # New: CAN-specific interactions
-                from ui.notes_view import render_notes_section
-                from ui.tasks_view import render_tasks_section
-                
-                c_tab1, c_tab2 = st.tabs(["CAN Notes", "CAN Tasks"])
-                with c_tab1:
-                    render_notes_section(db, can_id=can['id'])
-                with c_tab2:
-                    render_tasks_section(db, can_id=can['id'])
     else:
         st.info("No additional CAN numbers stored.")

@@ -90,10 +90,8 @@ Open-MFD uses a relational schema designed to maintain clean separation between 
 erDiagram
     CLIENTS ||--o{ CLIENT_CANS : "has multiple"
     CLIENTS ||--o{ DOCUMENTS : "uploads"
-    CLIENTS ||--o{ NOTES : "linked to"
-    CLIENTS ||--o{ TASKS : "assigned to"
-    CLIENT_CANS ||--o{ NOTES : "linked to"
-    CLIENT_CANS ||--o{ TASKS : "assigned to"
+    CLIENTS ||--o{ NOTES : "logs"
+    CLIENTS ||--o{ TASKS : "assigned"
     CLIENT_CANS ||--o{ FOLIOS : "owns"
     FOLIOS ||--o{ TRANSACTIONS : "contains"
     SCHEMES ||--o{ TRANSACTIONS : "referenced in"
@@ -142,23 +140,13 @@ erDiagram
         float current_nav
     }
 
-    NOTES {
-        integer id PK
-        integer client_id FK "Nullable"
-        integer can_id FK "Nullable"
-        string content
-        string category
-        timestamp created_at
-    }
-
     TASKS {
         integer id PK
-        integer client_id FK "Nullable"
-        integer can_id FK "Nullable"
+        integer client_id FK
         string description
         date due_date
         string status
-        string priority
+        priority priority
     }
 ```
 
@@ -170,9 +158,7 @@ erDiagram
 4.  **`schemes`**: A master list of Mutual Fund schemes. Transactions reference these to avoid data duplication and ensure consistent naming.
 5.  **`transactions`**: The ledger of all financial movements. It links a specific `scheme` to a specific `folio`.
 6.  **`documents`**: Stores metadata for files.
-7.  **`notes` & `tasks`**: CRM interaction data. 
-    - **Multi-Linkage**: Both tables include nullable `client_id` and `can_id` foreign keys.
-    - **Constraint**: A SQL `CHECK` constraint ensures that **at least one** of these two IDs must be non-null, preventing "orphaned" records while allowing flexibility (e.g., a note relevant to a specific CAN vs. a general client-level note).
+7.  **`notes` & `tasks`**: CRM interaction data. `notes` tracks meeting logs while `tasks` manages the workflow for signatures and reviews.
 
 ### 🔐 Multi-Layer Encryption Strategy
 

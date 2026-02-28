@@ -1,24 +1,21 @@
 import streamlit as st
 from datetime import datetime
 
-def render_tasks_section(db, client_id=None, can_id=None):
+def render_tasks_section(db, client_id=None):
     """
-    UI for managing tasks linked to a Client or specific CAN.
+    UI for managing tasks linked to a Client.
     """
     st.subheader("Task Management")
 
-    # Create a unique prefix for keys based on the entity type
-    prefix = f"can_{can_id}" if can_id else f"client_{client_id}"
-
     # 1. Custom Task Creation
     with st.expander("Add New Task"):
-        with st.form(f"new_task_form_{prefix}", clear_on_submit=True):
-            desc = st.text_input("Task Description", key=f"task_desc_in_{prefix}")
-            due_date = st.date_input("Due Date", key=f"task_due_in_{prefix}")
-            priority = st.selectbox("Priority", ["High", "Med", "Low"], index=1, key=f"task_pri_in_{prefix}")
+        with st.form(f"new_task_form_{client_id}", clear_on_submit=True):
+            desc = st.text_input("Task Description", key=f"task_desc_in_{client_id}")
+            due_date = st.date_input("Due Date", key=f"task_due_in_{client_id}")
+            priority = st.selectbox("Priority", ["High", "Med", "Low"], index=1, key=f"task_pri_in_{client_id}")
             if st.form_submit_button("Create Task"):
                 if desc:
-                    db.add_task(client_id=client_id, can_id=can_id, description=desc, 
+                    db.add_task(client_id=client_id, description=desc, 
                                 due_date=due_date.strftime('%Y-%m-%d'), priority=priority)
                     st.success("Task created!")
                     st.rerun()
@@ -29,9 +26,9 @@ def render_tasks_section(db, client_id=None, can_id=None):
     with st.expander("Schedule Standard MFD Task"):
         col1, col2 = st.columns([2, 1])
         with col1:
-            task_type = st.selectbox("Standard Task Type", ["Annual Portfolio Review", "Quarterly KYC Update", "Nomination Review"], key=f"std_task_type_{prefix}")
+            task_type = st.selectbox("Standard Task Type", ["Annual Portfolio Review", "Quarterly KYC Update", "Nomination Review"], key=f"std_task_type_{client_id}")
         with col2:
-            if st.button("Schedule Now", key=f"std_task_btn_{prefix}"):
+            if st.button("Schedule Now", key=f"std_task_btn_{client_id}"):
                 if task_type == "Annual Portfolio Review":
                     due = datetime.now().replace(year=datetime.now().year + 1)
                 elif task_type == "Quarterly KYC Update":
@@ -41,13 +38,13 @@ def render_tasks_section(db, client_id=None, can_id=None):
                 else:
                     due = datetime.now()
                 
-                db.add_task(client_id=client_id, can_id=can_id, description=task_type, 
+                db.add_task(client_id=client_id, description=task_type, 
                             due_date=due.strftime('%Y-%m-%d'), priority="Med")
                 st.success(f"Scheduled: {task_type}!")
                 st.rerun()
 
     # 3. Active Task List
-    tasks_df = db.get_tasks(client_id=client_id, can_id=can_id)
+    tasks_df = db.get_tasks(client_id=client_id)
     if not tasks_df.empty:
         for _, task in tasks_df.iterrows():
             with st.container(border=True):
@@ -63,4 +60,4 @@ def render_tasks_section(db, client_id=None, can_id=None):
                         db.update_task_status(task['id'], new_status)
                         st.rerun()
     else:
-        st.info("No tasks for this investor.")
+        st.info("No active tasks found.")
