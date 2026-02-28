@@ -9,8 +9,9 @@ def calculate_aum(client_id, db):
         SELECT t.units, s.current_nav
         FROM transactions t
         JOIN folios f ON t.folio_id = f.folio_id
+        JOIN client_cans cc ON f.can_id = cc.id
         JOIN schemes s ON t.scheme_id = s.scheme_id
-        WHERE f.client_id = ?
+        WHERE cc.client_id = ?
     '''
     df = db.run_query(query, params=(client_id,))
     if df.empty:
@@ -39,8 +40,9 @@ def calculate_client_metrics(client_id, db):
         SELECT t.date, t.amount, t.type, t.units, s.current_nav
         FROM transactions t
         JOIN folios f ON t.folio_id = f.folio_id
+        JOIN client_cans cc ON f.can_id = cc.id
         JOIN schemes s ON t.scheme_id = s.scheme_id
-        WHERE f.client_id = ?
+        WHERE cc.client_id = ?
     '''
     df = db.run_query(query, params=(client_id,))
     if df.empty:

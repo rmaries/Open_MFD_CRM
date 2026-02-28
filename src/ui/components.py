@@ -51,11 +51,19 @@ def transaction_entry(db):
     selected_client_name = st.selectbox("Select Client", list(client_options.keys()))
     client_id = client_options[selected_client_name]
 
-    # Fetch/Select Folio
-    # For now, let's allow adding a new folio or selecting an existing one
-    query = "SELECT * FROM folios WHERE client_id = ?"
-    folios_df = db.run_query(query, params=(client_id,))
-    
+    # Step 2: Select CAN
+    cans_df = db.get_client_cans(client_id)
+    if cans_df.empty:
+        st.warning("This client has no CAN numbers. Please add a CAN in the client's 'CAN Numbers' tab first.")
+        return
+
+    can_options = {row['can_number']: row['id'] for _, row in cans_df.iterrows()}
+    selected_can_label = st.selectbox("Select CAN", list(can_options.keys()))
+    can_id = can_options[selected_can_label]
+
+    # Step 3: Fetch/Select Folio under selected CAN
+    folios_df = db.get_folios_for_can(can_id)
+
     folio_id = None
     if not folios_df.empty:
         folio_options = {f"{row['folio_number']} ({row['amc_name']})": row['folio_id'] for _, row in folios_df.iterrows()}
@@ -68,8 +76,8 @@ def transaction_entry(db):
         amc_name = st.text_input("AMC Name (e.g., HDFC Mutual Fund)")
         if st.button("Create Folio"):
             if new_folio_num and amc_name:
-                folio_id = db.add_folio(client_id, new_folio_num, amc_name)
-                st.success(f"Folio {new_folio_num} created!")
+                folio_id = db.add_folio(can_id, new_folio_num, amc_name)
+                st.success(f"Folio {new_folio_num} created under CAN {selected_can_label}!")
                 st.rerun()
             else:
                 st.error("Folio number and AMC name are required.")

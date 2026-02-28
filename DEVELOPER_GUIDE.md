@@ -70,10 +70,10 @@ Open-MFD uses a relational schema designed to maintain clean separation between 
 ```mermaid
 erDiagram
     CLIENTS ||--o{ CLIENT_CANS : "has multiple"
-    CLIENTS ||--o{ FOLIOS : "owns"
     CLIENTS ||--o{ DOCUMENTS : "uploads"
     CLIENTS ||--o{ NOTES : "logs"
     CLIENTS ||--o{ TASKS : "assigned"
+    CLIENT_CANS ||--o{ FOLIOS : "owns"
     FOLIOS ||--o{ TRANSACTIONS : "contains"
     SCHEMES ||--o{ TRANSACTIONS : "referenced in"
 
@@ -83,7 +83,6 @@ erDiagram
         string pan "Encrypted"
         string email "Encrypted"
         string phone "Encrypted"
-        string can_number "Legacy/Encrypted"
         boolean kyc_status
         timestamp onboarding_date
     }
@@ -97,7 +96,7 @@ erDiagram
 
     FOLIOS {
         integer folio_id PK
-        integer client_id FK
+        integer can_id FK
         string folio_number
         string amc_name
         boolean is_active
@@ -125,9 +124,9 @@ erDiagram
 
 ### Table Definitions & Logic
 
-1.  **`clients`**: The central entity. Sensitive fields (PAN, Email, Phone, CAN) are encrypted at rest using Fernet symmetric encryption. One-to-many relationships exist for almost all other tables.
-2.  **`client_cans`**: Supports the "Multiple CAN" requirement. All CAN numbers added here are also encrypted.
-3.  **`folios`**: Represents a unique account number at an AMC. A client can have multiple folios.
+1.  **`clients`**: The central entity. Sensitive fields (PAN, Email, Phone) are encrypted at rest. All CAN numbers are managed via the `client_cans` table.
+2.  **`client_cans`**: Holds one or more CAN numbers per client (all encrypted). Each CAN can independently own folios.
+3.  **`folios`**: Belongs to a **specific CAN** (`can_id` FK → `client_cans.id`), not directly to a client. This reflects the real-world MFU model where a folio is registered under a CAN.
 4.  **`schemes`**: A master list of Mutual Fund schemes. Transactions reference these to avoid data duplication and ensure consistent naming.
 5.  **`transactions`**: The ledger of all financial movements. It links a specific `scheme` to a specific `folio`.
 6.  **`documents`**: Stores metadata for files. The `file_path` points to the `data/documents/` directory where the **encrypted binary content** is stored.

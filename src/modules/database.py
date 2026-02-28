@@ -63,15 +63,15 @@ class Database:
                 )
             ''')
             
-            # Table B: folios
+            # Table B: folios (can_id links to client_cans.id — folios belong to a specific CAN)
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS folios (
                     folio_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    client_id INTEGER,
+                    can_id INTEGER,
                     folio_number TEXT NOT NULL,
                     amc_name TEXT,
                     is_active BOOLEAN DEFAULT 1,
-                    FOREIGN KEY (client_id) REFERENCES clients (client_id)
+                    FOREIGN KEY (can_id) REFERENCES client_cans (id)
                 )
             ''')
             
@@ -152,14 +152,39 @@ class Database:
             ''')
             
             # Migration: Move existing CANs from clients table to client_cans
-            # We check if we already moved them by checking if client_cans is empty 
-            # while clients has data with can_number
             cursor.execute("SELECT count(*) FROM client_cans")
             if cursor.fetchone()[0] == 0:
                 cursor.execute("SELECT client_id, can_number FROM clients WHERE can_number IS NOT NULL AND can_number != ''")
                 existing_cans = cursor.fetchall()
                 for client_id, can in existing_cans:
                     cursor.execute("INSERT INTO client_cans (client_id, can_number) VALUES (?, ?)", (client_id, can))
+
+            # Migration: Move folios from client_id to can_id if folios still have client_id column
+            cursor.execute("PRAGMA table_info(folios)")
+            folio_cols = [row[1] for row in cursor.fetchall()]
+            if 'client_id' in folio_cols and 'can_id' not in folio_cols:
+                # Recreate folios table with can_id
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS folios_new (
+                        folio_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        can_id INTEGER,
+                        folio_number TEXT NOT NULL,
+                        amc_name TEXT,
+                        is_active BOOLEAN DEFAULT 1,
+                        FOREIGN KEY (can_id) REFERENCES client_cans (id)
+                    )
+                ''')
+                # Migrate: each folio gets the first CAN of its original client
+                cursor.execute('''
+                    INSERT INTO folios_new (folio_id, can_id, folio_number, amc_name, is_active)
+                    SELECT f.folio_id,
+                           (SELECT cc.id FROM client_cans cc WHERE cc.client_id = f.client_id ORDER BY cc.id LIMIT 1),
+                           f.folio_number, f.amc_name, f.is_active
+                    FROM folios f
+                    WHERE (SELECT cc.id FROM client_cans cc WHERE cc.client_id = f.client_id ORDER BY cc.id LIMIT 1) IS NOT NULL
+                ''')
+                cursor.execute('DROP TABLE folios')
+                cursor.execute('ALTER TABLE folios_new RENAME TO folios')
 
             conn.commit()
         finally:
@@ -383,16 +408,21 @@ class Database:
         finally:
             conn.close()
 
-    def add_folio(self, client_id, folio_number, amc_name):
-        query = 'INSERT INTO folios (client_id, folio_number, amc_name) VALUES (?, ?, ?)'
+    def add_folio(self, can_id, folio_number, amc_name):
+        """Create a new folio linked to a specific CAN."""
+        query = 'INSERT INTO folios (can_id, folio_number, amc_name) VALUES (?, ?, ?)'
         conn = self.get_connection()
         try:
             with conn:
                 cursor = conn.cursor()
-                cursor.execute(query, (client_id, folio_number, amc_name))
+                cursor.execute(query, (int(can_id), folio_number, amc_name))
                 return cursor.lastrowid
         finally:
             conn.close()
+
+    def get_folios_for_can(self, can_id):
+        """Get all folios for a specific CAN."""
+        return self.run_query("SELECT * FROM folios WHERE can_id = ?", params=(int(can_id),))
 
     def add_transaction(self, folio_id, scheme_id, date, trans_type, amount, units, nav):
         query = '''
@@ -419,14 +449,19 @@ class Database:
         return df
         
     def get_client_portfolio(self, client_id):
+        """Get all transactions for a client, joining through client_cans."""
         query = '''
-            SELECT f.folio_number, f.amc_name, s.scheme_name, t.date, t.type, t.amount, t.units, t.nav_at_purchase
+            SELECT cc.can_number, f.folio_number, f.amc_name, s.scheme_name, t.date, t.type, t.amount, t.units, t.nav_at_purchase
             FROM transactions t
             JOIN folios f ON t.folio_id = f.folio_id
+            JOIN client_cans cc ON f.can_id = cc.id
             JOIN schemes s ON t.scheme_id = s.scheme_id
-            WHERE f.client_id = ?
+            WHERE cc.client_id = ?
         '''
-        return self.run_query(query, params=(client_id,))
+        df = self.run_query(query, params=(client_id,))
+        if not df.empty:
+            df['can_number'] = df['can_number'].apply(self._decrypt)
+        return df
 
     def get_total_metrics(self):
         """Calculate aggregate metrics across all clients efficiently."""
