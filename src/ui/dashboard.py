@@ -44,34 +44,48 @@ def render_dashboard(db):
                                         format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0])
         
         if selected_client_id:
-            tab1, tab2, tab3, tab4, tab5 = st.tabs(["Portfolio", "Notes", "Tasks", "Documents", "CAN Numbers"])
+            tab1, tab2, tab3, tab4 = st.tabs(["Portfolio & CANs", "Notes", "Tasks", "Documents"])
             
             with tab1:
-                # Use modularized fetch + pure calculation
-                calc_df = db.get_transactions_for_calculations(selected_client_id)
-                metrics = calculate_client_metrics(calc_df)
-                
-                # Client Info & KYC Toggle
-                client_data = clients_df[clients_df['client_id'] == selected_client_id].iloc[0]
-                
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric("Client AUM", f"₹{metrics['aum']:,.2f}")
-                c2.metric("Net Investment", f"₹{metrics['net_investment']:,.2f}")
-                c3.metric("Total Gain", f"₹{metrics['total_gain']:,.2f}")
-                c4.metric("XIRR", f"{metrics['xirr']:.2%}")
+                # Use modularized fetch + pure calculation with optional CAN filtering
+                # This needs to be moved AFTER CAN selection, so we will use a placeholder or restructure.
+                # Actually, the metrics display needs the selected CAN. Let's restructure the UI layout.
+                pass # Replaced below along with the portfolio details.
 
+
+                st.divider()
+                
                 st.divider()
                 
                 k_col1, k_col2 = st.columns([1, 1])
                 with k_col1:
                     st.write(f"**PAN:** {client_data['pan']}")
-                    st.write(f"**Email:** {client_data.get('email', 'N/A')}")
+                    
+                    # Fetch CANs for dropdown
+                    cans_df = db.get_client_cans(selected_client_id)
+                    can_options = [{"label": "ALL", "value": None}]
+                    if not cans_df.empty:
+                        for _, can in cans_df.iterrows():
+                            desc = f" ({can['can_description']})" if can.get('can_description') else ""
+                            can_options.append({"label": f"{can['can_number']}{desc}", "value": can['id']})
+                            
+                    selected_can = st.selectbox(
+                        "Filter Portfolio by CAN",
+                        options=can_options,
+                        format_func=lambda x: x["label"],
+                        key=f"can_filter_{selected_client_id}"
+                    )
+                    selected_can_id = selected_can["value"]
+
                 with k_col2:
                     kyc_status = st.toggle("KYC Verified", value=bool(client_data['kyc_status']), key=f"kyc_{selected_client_id}")
                     if kyc_status != bool(client_data['kyc_status']):
                         db.update_client_kyc(selected_client_id, kyc_status)
                         st.success("KYC status updated!")
                         st.rerun()
+                    st.write(f"**Email:** {client_data.get('email', 'N/A')}")
+                    st.write(f"**Phone:** {client_data.get('phone', 'N/A')}")
+
                 
                 # Edit Profile Section
                 with st.expander("📝 Edit Client Profile"):
@@ -102,12 +116,29 @@ def render_dashboard(db):
 
                 st.divider()
                 
+                st.divider()
+                
+                # Metrics now calculated based on selected CAN
+                calc_df = db.get_transactions_for_calculations(selected_client_id, can_id=selected_can_id)
+                metrics = calculate_client_metrics(calc_df)
+                
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric(f"{'Filtered' if selected_can_id else 'Client'} AUM", f"₹{metrics['aum']:,.2f}")
+                c2.metric("Net Investment", f"₹{metrics['net_investment']:,.2f}")
+                c3.metric("Total Gain", f"₹{metrics['total_gain']:,.2f}")
+                c4.metric("XIRR", f"{metrics['xirr']:.2%}")
+                
                 st.write("### Portfolio Details")
-                portfolio_df = db.get_client_portfolio(selected_client_id)
+                portfolio_df = db.get_client_portfolio(selected_client_id, can_id=selected_can_id)
                 if not portfolio_df.empty:
                     st.table(portfolio_df)
                 else:
-                    st.info("No transactions found for this client.")
+                    st.info("No transactions found for this client/CAN.")
+                    
+                st.divider()
+                with st.expander("⚙️ Manage CAN Numbers"):
+                    render_can_management(db, selected_client_id)
+
             
             with tab2:
                 render_notes_section(db, client_id=selected_client_id)
@@ -118,7 +149,5 @@ def render_dashboard(db):
             with tab4:
                 render_documents_section(db, selected_client_id)
 
-            with tab5:
-                render_can_management(db, selected_client_id)
     else:
         st.info("No clients onboarded yet. Go to 'Client Management' to add your first client.")

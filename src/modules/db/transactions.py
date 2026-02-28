@@ -26,10 +26,11 @@ class TransactionRepository(EncryptionMixin, BaseRepository):
         finally:
             conn.close()
 
-    def get_client_portfolio(self, client_id) -> pd.DataFrame:
+    def get_client_portfolio(self, client_id, can_id=None) -> pd.DataFrame:
         """
         Retrieves a viewable ledger of all transactions for a client.
         Joins Transactions, Folios, CANs, and Schemes for a complete overview.
+        Optionally filters by a specific can_id.
         """
         query = '''
             SELECT cc.can_number, f.folio_number, f.amc_name, s.scheme_name, t.date, t.type, t.amount, t.units, t.nav_at_purchase
@@ -39,7 +40,12 @@ class TransactionRepository(EncryptionMixin, BaseRepository):
             JOIN schemes s ON t.scheme_id = s.scheme_id
             WHERE cc.client_id = ?
         '''
-        df = self.run_query(query, params=(client_id,))
+        params = [client_id]
+        if can_id:
+            query += " AND cc.id = ?"
+            params.append(can_id)
+            
+        df = self.run_query(query, params=tuple(params))
         if not df.empty:
             df['can_number'] = df['can_number'].apply(self._decrypt)
         return df
@@ -55,10 +61,11 @@ class TransactionRepository(EncryptionMixin, BaseRepository):
         total = float(df['total_aum'].iloc[0]) if not df.empty and df['total_aum'].iloc[0] is not None else 0.0
         return {"total_aum": total}
 
-    def get_transactions_for_calculations(self, client_id) -> pd.DataFrame:
+    def get_transactions_for_calculations(self, client_id, can_id=None) -> pd.DataFrame:
         """
         Specialized fetch for financial math (calculations.py).
         Returns raw units and current NAV for AUM/XIRR computing without manual joins.
+        Optionally filters by a specific can_id.
         """
         query = '''
             SELECT t.date, t.amount, t.type, t.units, s.current_nav
@@ -68,4 +75,9 @@ class TransactionRepository(EncryptionMixin, BaseRepository):
             JOIN schemes s ON t.scheme_id = s.scheme_id
             WHERE cc.client_id = ?
         '''
-        return self.run_query(query, params=(client_id,))
+        params = [client_id]
+        if can_id:
+            query += " AND cc.id = ?"
+            params.append(can_id)
+            
+        return self.run_query(query, params=tuple(params))

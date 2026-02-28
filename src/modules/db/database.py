@@ -85,14 +85,14 @@ class Database:
     def add_transaction(self, *args, **kwargs):
         return self.transactions.add_transaction(*args, **kwargs)
 
-    def get_client_portfolio(self, client_id):
-        return self.transactions.get_client_portfolio(client_id)
+    def get_client_portfolio(self, client_id, can_id=None):
+        return self.transactions.get_client_portfolio(client_id, can_id=can_id)
 
     def get_total_metrics(self):
         return self.transactions.get_total_metrics()
         
-    def get_transactions_for_calculations(self, client_id):
-        return self.transactions.get_transactions_for_calculations(client_id)
+    def get_transactions_for_calculations(self, client_id, can_id=None):
+        return self.transactions.get_transactions_for_calculations(client_id, can_id=can_id)
 
     # --- Note Passthroughs ---
     def add_note(self, *args, **kwargs):

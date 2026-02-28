@@ -16,16 +16,13 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
 - **Overdue Tasks**: Highlights the count of tasks that have passed their due date.
 - **Client List**: A searchable table of all your clients and their KYC status.
 - **Portfolio & Interaction Center**: Select a specific client to view their detailed profile:
-    - **Portfolio**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
-    - **KYC Toggle**: Quickly update a client's KYC verification status.
-    - **Edit Client Profile**: Update Name, PAN, Email, and Phone details.
-    - **Notes**: A dedicated space for meeting minutes, complaints, or general interaction logs.
+    - **Portfolio & CANs**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
+        - **CAN Filter**: Use the dropdown below the PAN to view the total aggregate portfolio ("ALL") or filter by a specific CAN.
+        - **Manage CAN Numbers**: Use the expander at the bottom of the portfolio view to add or delete CANs. The initial CAN from onboarding is automatically included.
+    - **Notes**: A dedicated space for meeting logs.
     - **Tasks**: Create and track investor-specific actions.
-    - **Documents**: Securely upload, view (images/PDFs), and manage client files (Encrypted on disk).
-    - **CAN Numbers**: Manage multiple Common Account Numbers for the same client.
-        - The CAN entered during onboarding is **automatically** included here.
-        - Click **"➕ Add New CAN Number"** to add additional CANs.
-        - Click the **🗑️** icon next to any CAN to remove it.
+    - **Documents**: Securely manage client files.
+
 
 ## 👤 2. Client Management
 
