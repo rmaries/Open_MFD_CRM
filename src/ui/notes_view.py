@@ -1,33 +1,37 @@
 import streamlit as st
 
-def render_notes_section(db, investor_id):
+def render_notes_section(db, client_id=None, can_id=None):
     """
-    UI for viewing and adding timestamped investor notes.
+    UI for viewing and adding timestamped investor notes linked to a Client or CAN.
     """
-    st.subheader("Investor Notes")
+    st.subheader("Investigation & Interaction Notes")
     
     # 1. Add Note Form
     with st.expander("Add New Note"):
-        with st.form("new_note_form", clear_on_submit=True):
+        with st.form(f"new_note_form_{client_id or can_id}", clear_on_submit=True):
             content = st.text_area("Note Content")
             category = st.selectbox("Category", ["General", "Meeting Minutes", "Complaint", "Advice Given"])
             if st.form_submit_button("Save Note"):
                 if content:
-                    db.add_note(investor_id, content, category)
+                    db.add_note(client_id=client_id, can_id=can_id, content=content, category=category)
                     st.success("Note saved!")
                     st.rerun()
                 else:
                     st.error("Note content cannot be empty.")
 
-    # 2. Search UI
-    search_query = st.text_input("Search through notes...", key="note_search")
+    # 2. Search UI (Optional filter)
+    search_query = st.text_input("Search through notes...", key=f"note_search_{client_id or can_id}")
     
     # 3. List display logic
     if search_query:
         notes_df = db.search_notes(search_query)
-        notes_df = notes_df[notes_df['investor_id'] == investor_id]
+        # Filter based on the current context
+        if can_id:
+            notes_df = notes_df[notes_df['can_id'] == can_id]
+        else:
+            notes_df = notes_df[notes_df['client_id'] == client_id]
     else:
-        notes_df = db.get_notes(investor_id)
+        notes_df = db.get_notes(client_id=client_id, can_id=can_id)
 
     if not notes_df.empty:
         for _, note in notes_df.iterrows():

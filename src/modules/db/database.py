@@ -35,8 +35,8 @@ class Database:
         self.clients = ClientRepository(db_path, key=self.key)
         self.folios = FolioRepository(db_path)
         self.transactions = TransactionRepository(db_path, key=self.key)
-        self.notes = NoteRepository(db_path)
-        self.tasks = TaskRepository(db_path)
+        self.notes = NoteRepository(db_path, key=self.key)
+        self.tasks = TaskRepository(db_path, key=self.key)
         self.documents = DocumentRepository(db_path, key=self.key)
         
         # Initialize database schema
@@ -98,8 +98,8 @@ class Database:
     def add_note(self, *args, **kwargs):
         return self.notes.add_note(*args, **kwargs)
 
-    def get_notes(self, client_id):
-        return self.notes.get_notes(client_id)
+    def get_notes(self, client_id=None, can_id=None):
+        return self.notes.get_notes(client_id, can_id)
 
     def search_notes(self, keyword):
         return self.notes.search_notes(keyword)
@@ -111,8 +111,8 @@ class Database:
     def update_task_status(self, task_id, status):
         return self.tasks.update_task_status(task_id, status)
 
-    def get_tasks(self, client_id=None):
-        return self.tasks.get_tasks(client_id)
+    def get_tasks(self, client_id=None, can_id=None):
+        return self.tasks.get_tasks(client_id, can_id)
 
     def get_overdue_tasks(self):
         return self.tasks.get_overdue_tasks()

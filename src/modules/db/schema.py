@@ -105,39 +105,45 @@ class SchemaManager(BaseRepository):
                 )
             ''')
 
-            # Notes table: Stores general notes or remarks related to investors.
-            # id: Primary key, unique identifier for each note.
-            # investor_id: Foreign key referencing the clients table.
-            # content: The actual text content of the note.
-            # category: Category of the note (e.g., "Meeting", "Call", "Follow-up").
-            # created_at: Timestamp when the note was created.
+            # Notes table: Stores general notes or remarks related to investors (Client or CAN).
+            # id: Primary key.
+            # client_id: Foreign key referencing clients table (nullable).
+            # can_id: Foreign key referencing client_cans table (nullable).
+            # content: The actual text content.
+            # category: Category of the note.
+            # created_at: Timestamp.
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS notes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    investor_id INTEGER,
+                    client_id INTEGER,
+                    can_id INTEGER,
                     content TEXT NOT NULL,
                     category TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (investor_id) REFERENCES clients (client_id)
+                    FOREIGN KEY (client_id) REFERENCES clients (client_id),
+                    FOREIGN KEY (can_id) REFERENCES client_cans (id),
+                    CHECK (client_id IS NOT NULL OR can_id IS NOT NULL)
                 )
             ''')
 
-            # Tasks table: Manages tasks associated with investors.
-            # id: Primary key, unique identifier for each task.
-            # investor_id: Foreign key referencing the clients table.
-            # description: Detailed description of the task.
-            # due_date: Date by which the task should be completed.
-            # status: Current status of the task (Pending, In Progress, Completed, Cancelled).
-            # priority: Priority level of the task (High, Med, Low).
+            # Tasks table: Manages tasks associated with Client or CAN.
+            # id: Primary key.
+            # client_id: Foreign key referencing clients (nullable).
+            # can_id: Foreign key referencing client_cans (nullable).
+            # description: Details of the task.
+            # ...
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS tasks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    investor_id INTEGER,
+                    client_id INTEGER,
+                    can_id INTEGER,
                     description TEXT NOT NULL,
                     due_date DATE,
                     status TEXT CHECK(status IN ('Pending', 'In Progress', 'Completed', 'Cancelled')) DEFAULT 'Pending',
                     priority TEXT CHECK(priority IN ('High', 'Med', 'Low')) DEFAULT 'Med',
-                    FOREIGN KEY (investor_id) REFERENCES clients (client_id)
+                    FOREIGN KEY (client_id) REFERENCES clients (client_id),
+                    FOREIGN KEY (can_id) REFERENCES client_cans (id),
+                    CHECK (client_id IS NOT NULL OR can_id IS NOT NULL)
                 )
             ''')
 
@@ -187,6 +193,7 @@ class SchemaManager(BaseRepository):
         """
         self._migrate_cans_to_table()
         self._migrate_folios_to_cans()
+        self._migrate_notes_tasks_linkage()
 
     def _migrate_cans_to_table(self):
         """
@@ -240,5 +247,43 @@ class SchemaManager(BaseRepository):
                 cursor.execute('DROP TABLE folios')
                 cursor.execute('ALTER TABLE folios_new RENAME TO folios')
                 conn.commit()
+        finally:
+            conn.close()
+
+    def _migrate_notes_tasks_linkage(self):
+        """Migrates investor_id to client_id for notes and tasks if columns exist."""
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            
+            # Migrate Notes
+            cursor.execute("PRAGMA table_info(notes)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'investor_id' in columns:
+                # SQLite ALTER RENAME is tricky, we'll do the simple copy-and-recreate method if needed
+                # But if we just added columns via _create_tables, they might not be there yet?
+                # Actually _create_tables uses IF NOT EXISTS, so if table existed, it won't change.
+                # We need to manually add columns if they don't exist.
+                if 'client_id' not in columns:
+                    cursor.execute("ALTER TABLE notes ADD COLUMN client_id INTEGER REFERENCES clients(client_id)")
+                if 'can_id' not in columns:
+                    cursor.execute("ALTER TABLE notes ADD COLUMN can_id INTEGER REFERENCES client_cans(id)")
+                
+                cursor.execute("UPDATE notes SET client_id = investor_id WHERE client_id IS NULL AND investor_id IS NOT NULL")
+                # We can't easily drop a column in SQLite without recreating the table, 
+                # but we can leave investor_id for now or do the full recreation.
+            
+            # Migrate Tasks
+            cursor.execute("PRAGMA table_info(tasks)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'investor_id' in columns:
+                if 'client_id' not in columns:
+                    cursor.execute("ALTER TABLE tasks ADD COLUMN client_id INTEGER REFERENCES clients(client_id)")
+                if 'can_id' not in columns:
+                    cursor.execute("ALTER TABLE tasks ADD COLUMN can_id INTEGER REFERENCES client_cans(id)")
+                
+                cursor.execute("UPDATE tasks SET client_id = investor_id WHERE client_id IS NULL AND investor_id IS NOT NULL")
+            
+            conn.commit()
         finally:
             conn.close()

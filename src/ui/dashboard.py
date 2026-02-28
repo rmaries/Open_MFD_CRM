@@ -110,10 +110,10 @@ def render_dashboard(db):
                     st.info("No transactions found for this client.")
             
             with tab2:
-                render_notes_section(db, selected_client_id)
+                render_notes_section(db, client_id=selected_client_id)
                 
             with tab3:
-                render_tasks_section(db, selected_client_id)
+                render_tasks_section(db, client_id=selected_client_id)
                 
             with tab4:
                 render_documents_section(db, selected_client_id)
