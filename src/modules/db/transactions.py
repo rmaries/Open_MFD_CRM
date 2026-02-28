@@ -1,15 +1,14 @@
 import pandas as pd
 from .connection import BaseRepository
-from .encryption import EncryptionMixin
 
-class TransactionRepository(EncryptionMixin, BaseRepository):
+class TransactionRepository(BaseRepository):
     """
     Handles investment transactions and portfolio performance fetching.
+    Stores all data in plain text.
     """
-    def __init__(self, db_path: str, key: str = None):
-        """Initialize with DB path and encryption support."""
+    def __init__(self, db_path: str, **kwargs):
+        """Initialize with DB path."""
         BaseRepository.__init__(self, db_path)
-        EncryptionMixin.__init__(self, key)
 
     def add_transaction(self, folio_id, scheme_id, date, trans_type, amount, units, nav):
         """Records a new buy/sell/sip transaction."""
@@ -45,10 +44,7 @@ class TransactionRepository(EncryptionMixin, BaseRepository):
             query += " AND cc.id = ?"
             params.append(can_id)
             
-        df = self.run_query(query, params=tuple(params))
-        if not df.empty:
-            df['can_number'] = df['can_number'].apply(self._decrypt)
-        return df
+        return self.run_query(query, params=tuple(params))
 
     def get_total_metrics(self) -> dict:
         """Calculates global AUM (Assets Under Management) across all clients."""

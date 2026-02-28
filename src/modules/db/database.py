@@ -1,6 +1,5 @@
 import os
-import base64
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 from .schema import SchemaManager
 from .clients import ClientRepository
 from .folios import FolioRepository
@@ -8,58 +7,31 @@ from .transactions import TransactionRepository
 from .notes import NoteRepository
 from .tasks import TaskRepository
 from .documents import DocumentRepository
-from .encryption import EncryptionMixin
-
-from cryptography.fernet import Fernet
 
 # Load environment variables
-dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), ".env")
-load_dotenv(dotenv_path)
+load_dotenv()
 
 class Database:
     """
     Facade class that composes all modularized repositories.
-    Requires an encryption key (derived from password) for initialization.
+    Stores all data in plain text.
     """
-    def __init__(self, db_path=None, key=None):
+    def __init__(self, db_path=None):
         if db_path is None:
             db_path = os.getenv("DB_PATH", "open_mfd.db")
         self.db_path = db_path
         
-        # Salt Management for KDF
-        self.salt = self._get_or_create_salt()
-        
-        # Encryption Key Management
-        # In the new password-based flow, the key MUST be provided explicitly from the UI.
-        # We only fallback to .env for backward compatibility during transition or tests.
-        self.key = key or os.getenv("FERNET_KEY")
-        
-        if not self.key:
-            # If no key is provided, repositories will be initialized with a dummy key
-            # but encryption/decryption will fail. This allows the app to load the "Unlock" screen.
-            self.key = Fernet.generate_key().decode()
-
-        # Initialize Sub-Repositories with the shared key
+        # Initialize Sub-Repositories
         self.schema = SchemaManager(db_path)
-        self.clients = ClientRepository(db_path, key=self.key)
+        self.clients = ClientRepository(db_path)
         self.folios = FolioRepository(db_path)
-        self.transactions = TransactionRepository(db_path, key=self.key)
+        self.transactions = TransactionRepository(db_path)
         self.notes = NoteRepository(db_path)
         self.tasks = TaskRepository(db_path)
-        self.documents = DocumentRepository(db_path, key=self.key)
+        self.documents = DocumentRepository(db_path)
         
         # Initialize database schema
         self.schema.init_db()
-
-    def _get_or_create_salt(self) -> bytes:
-        """Retrieves the persistent salt from .env or generates a new one."""
-        salt_str = os.getenv("FERNET_SALT")
-        if not salt_str:
-            salt = os.urandom(16)
-            salt_str = base64.b64encode(salt).decode()
-            set_key(dotenv_path, "FERNET_SALT", salt_str)
-            return salt
-        return base64.b64decode(salt_str)
 
     # --- Schema/Connection Passthroughs ---
     def get_connection(self):

@@ -8,35 +8,12 @@ import shutil
 import os
 from datetime import datetime
 
-from modules.db.encryption import EncryptionMixin
 
 def main():
     st.set_page_config(page_title="Open-MFD CRM", layout="wide")
     
-    # 1. Vault Unlock Logic
-    if "vault_key" not in st.session_state:
-        st.title("🔐 Open-MFD Vault")
-        st.info("Your data is encrypted. Please enter your Vault Password to continue.")
-        
-        with st.form("vault_unlock"):
-            password = st.password_input("Vault Password", help="This password derives your encryption key.")
-            if st.form_submit_button("Unlock Vault"):
-                if password:
-                    try:
-                        # Temporary DB instance to get the salt
-                        temp_db = Database()
-                        derived_key = EncryptionMixin.derive_key(password, temp_db.salt)
-                        st.session_state.vault_key = derived_key
-                        st.success("Vault unlocked!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Unlock failed: {e}")
-                else:
-                    st.error("Password is required.")
-        st.stop()
-
-    # 2. Database Initialization (Post-Unlock)
-    db = Database(key=st.session_state.vault_key)
+    # 1. Database Initialization
+    db = Database()
 
     # Custom CSS for Navbar
     st.markdown("""
@@ -73,9 +50,6 @@ def main():
     with st.sidebar:
         st.title("🚀 Open-MFD")
         st.caption("v1.0.0 | CRM for MFDs")
-        if st.button("🔒 Lock Vault", use_container_width=True):
-            del st.session_state.vault_key
-            st.rerun()
         st.divider()
         
         menu_items = {

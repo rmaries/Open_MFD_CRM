@@ -1,6 +1,6 @@
 import pandas as pd
 from .connection import BaseRepository
-from .encryption import EncryptionMixin
+
 
 class TaskRepository(BaseRepository):
     """
