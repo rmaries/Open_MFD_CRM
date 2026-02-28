@@ -76,7 +76,6 @@ def main():
         st.header("🔗 MFU Integration")
         st.info("MFU API Connection logic will be implemented here.")
     elif choice == "User Guide":
-        import os
         guide_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "USER_GUIDE.md")
         if os.path.exists(guide_path):
             with open(guide_path, "r", encoding="utf-8") as f:
