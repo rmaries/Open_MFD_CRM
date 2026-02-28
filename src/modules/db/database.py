@@ -65,8 +65,8 @@ class Database:
     def update_client_kyc(self, client_id, status):
         return self.clients.update_client_kyc(client_id, status)
 
-    def add_client_can(self, client_id, can):
-        return self.clients.add_client_can(client_id, can)
+    def add_client_can(self, client_id, can, can_description=None):
+        return self.clients.add_client_can(client_id, can, can_description=can_description)
 
     def get_client_cans(self, client_id):
         return self.clients.get_client_cans(client_id)
