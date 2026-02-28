@@ -33,8 +33,19 @@ def render_can_management(db, client_id):
                         st.write(f"_{can['can_description']}_")
                     st.caption(f"Added on: {can['created_at']}")
                 with col2:
-                    if st.button("🗑️", key=f"del_can_{can['id']}"):
-                        db.delete_client_can(can['id'])
-                        st.rerun()
+                    # Check if CAN has associated folios (portfolio)
+                    folios_df = db.get_folios_for_can(can['id'])
+                    has_portfolio = not folios_df.empty
+                    
+                    if not has_portfolio:
+                        if st.button("🗑️", key=f"del_can_{can['id']}", help="Delete this CAN"):
+                            success, message = db.delete_client_can(can['id'])
+                            if success:
+                                st.success(message)
+                                st.rerun()
+                            else:
+                                st.error(message)
+                    else:
+                        st.button("🔒", key=f"lock_can_{can['id']}", help="CAN has active portfolio and cannot be deleted.")
     else:
         st.info("No additional CAN numbers stored.")

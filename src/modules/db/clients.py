@@ -142,12 +142,21 @@ class ClientRepository(EncryptionMixin, BaseRepository):
         return df
 
     def delete_client_can(self, can_id):
-        """Removes a CAN record from the database."""
+        """Removes a CAN record from the database if it has no associated folios."""
+        # 1. Safety Check: Check for associated folios
+        check_query = "SELECT count(*) FROM folios WHERE can_id = ?"
+        df = self.run_query(check_query, params=(int(can_id),))
+        folio_count = df.iloc[0, 0] if not df.empty else 0
+        
+        if folio_count > 0:
+            return False, f"Cannot delete: CAN has {folio_count} associated folio(s)."
+
+        # 2. Proceed with deletion
         query = "DELETE FROM client_cans WHERE id = ?"
         conn = self.get_connection()
         try:
             with conn:
                 conn.execute(query, (int(can_id),))
-            return True
+            return True, "CAN deleted successfully."
         finally:
             conn.close()
