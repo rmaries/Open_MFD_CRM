@@ -22,26 +22,6 @@ def render_tasks_section(db, client_id=None):
                 else:
                     st.error("Task description is required.")
 
-    # 2. Standardized MFD Workflows
-    with st.expander("Schedule Standard MFD Task"):
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            task_type = st.selectbox("Standard Task Type", ["Annual Portfolio Review", "Quarterly KYC Update", "Nomination Review"], key=f"std_task_type_{client_id}")
-        with col2:
-            if st.button("Schedule Now", key=f"std_task_btn_{client_id}"):
-                if task_type == "Annual Portfolio Review":
-                    due = datetime.now().replace(year=datetime.now().year + 1)
-                elif task_type == "Quarterly KYC Update":
-                    month = (datetime.now().month + 2) % 12 + 1
-                    year = datetime.now().year + (datetime.now().month + 2) // 12
-                    due = datetime.now().replace(year=year, month=month)
-                else:
-                    due = datetime.now()
-                
-                db.add_task(client_id=client_id, description=task_type, 
-                            due_date=due.strftime('%Y-%m-%d'), priority="Med")
-                st.success(f"Scheduled: {task_type}!")
-                st.rerun()
 
     # 3. Active Task List
     tasks_df = db.get_tasks(client_id=client_id)
