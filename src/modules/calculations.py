@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import numpy_financial as npf
 from scipy.optimize import newton
-import streamlit as st # Assuming streamlit is used for UI based on the new function
 
 def calculate_aum(df: pd.DataFrame) -> float:
     """
@@ -78,5 +77,5 @@ def calculate_client_metrics(df: pd.DataFrame) -> dict:
     dates.append(pd.Timestamp.now())
     
     client_xirr = xirr(cashflows, dates)
-    
-    }
+    metrics["xirr"] = client_xirr if client_xirr else 0.0
+    return metrics

@@ -47,7 +47,9 @@ def render_dashboard(db):
             tab1, tab2, tab3, tab4, tab5 = st.tabs(["Portfolio", "Notes", "Tasks", "Documents", "CAN Numbers"])
             
             with tab1:
-                metrics = calculate_client_metrics(selected_client_id, db)
+                # Use modularized fetch + pure calculation
+                calc_df = db.get_transactions_for_calculations(selected_client_id)
+                metrics = calculate_client_metrics(calc_df)
                 
                 # Client Info & KYC Toggle
                 client_data = clients_df[clients_df['client_id'] == selected_client_id].iloc[0]

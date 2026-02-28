@@ -37,7 +37,8 @@ def test_calculations():
     # Total Gain: 21,000 - 15,000 = 6,000
     
     # 3. Verify Metrics
-    metrics = calculate_client_metrics(client_id, db)
+    calc_df = db.get_transactions_for_calculations(client_id)
+    metrics = calculate_client_metrics(calc_df)
     print("\nCalculated Metrics:")
     for key, value in metrics.items():
         if key == "xirr":
