@@ -12,9 +12,9 @@ As the BDFL, @rmaries has final say over the project's direction, feature priori
 
 ## 🚀 Key Features
 - **Portable Distribution**: No installation required. Runs instantly from a single folder.
-- **Client Vault (Encryption)**: Sensitive data (PAN, Phone, Email, CAN) is secured using AES-256 (Fernet) both in the DB and for binary files.
+- **Client Management**: Sensitive data (PAN, Phone, Email, CAN) is managed in a centralized database.
 - **Flexible Onboarding**: Add clients with just Name and Phone. PAN is optional.
-- **Document Management**: Securely store and view client photos, PAN copies, and forms (Encrypted on disk).
+- **Document Management**: Store and view client photos, PAN copies, and forms.
 - **Multiple CAN Support**: Associate multiple Common Account Numbers with a single client profile.
 - **Portfolio Tracking**: Real-time XIRR and gain calculations for clients.
 - **Client Management**: Edit profile details and KYC status with one click.

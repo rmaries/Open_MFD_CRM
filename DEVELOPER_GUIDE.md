@@ -8,7 +8,6 @@ Open-MFD is built as a lightweight, portable Python application using the follow
 
 - **Frontend**: [Streamlit](https://streamlit.io/) handles the UI and state management.
 - **Database**: [SQLite](https://www.sqlite.org/) is used for local data storage.
-- **Encryption**: [Cryptography (Fernet)](https://cryptography.io/en/latest/fernet/) secures sensitive client data.
 - **Logic**: Custom Python modules in `src/modules/` handle calculations and database interactions.
 
 ## 📁 Project Structure
@@ -21,7 +20,6 @@ open_mfd_crm/
 │   │   ├── db/             # Experimental: Domain-specific repositories
 │   │   │   ├── clients.py      # Client & CAN CRUD
 │   │   │   ├── transactions.py # Trade logging & portfolio fetches
-│   │   │   ├── encryption.py   # Fernet encryption mixin
 │   │   │   └── schema.py       # DDL and Migrations
 │   │   ├── database.py     # Backward-compatible Facade (entry point)
 │   │   ├── calculations.py # Pure financial/portfolio math
@@ -52,22 +50,12 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory (the app will auto-generate one if missing):
 ```text
 DB_PATH=open_mfd.db
-FERNET_KEY=your_base64_encryption_key
 ```
 
 ### 4. Running the App
 ```bash
 python src/app.py
 ```
-
-## 🔐 Security & Encryption
-
-Open-MFD uses **Field-Level Encryption** centered in the `EncryptionMixin`:
-- **Database Layer**: Repositories like `ClientRepository` use `_encrypt()` before `INSERT`.
-- **File Layer**: `DocumentRepository` encrypts binary content before writing to `data/documents/`.
-- **Fallback**: The `_decrypt()` method includes logic to return plain text if decryption fails, supporting legacy data gracefully.
-
-**Important**: Never commit your `.env` file or hardcode keys.
 
 ## 🏛️ Core Design Patterns
 
@@ -99,9 +87,9 @@ erDiagram
     CLIENTS {
         integer client_id PK
         string name
-        string pan "Encrypted"
-        string email "Encrypted"
-        string phone "Encrypted"
+        string pan
+        string email
+        string phone
         boolean kyc_status
         timestamp onboarding_date
     }
@@ -153,20 +141,13 @@ erDiagram
 
 ### Table Definitions & Logic
 
-1.  **`clients`**: The central entity. Sensitive fields (PAN, Email, Phone) are encrypted at rest. All CAN numbers are managed via the `client_cans` table.
-2.  **`client_cans`**: Stores multiple CANs per client. Includes a `can_description` for labeling.
- (all encrypted). Each CAN can independently own folios.
+1.  **`clients`**: The central entity. All CAN numbers are managed via the `client_cans` table.
+2.  **`client_cans`**: Stores multiple CANs per client. Includes a `can_description` for labeling. Each CAN can independently own folios.
 3.  **`folios`**: Belongs to a **specific CAN** (`can_id` FK → `client_cans.id`), not directly to a client. This reflects the real-world MFU model where a folio is registered under a CAN.
 4.  **`schemes`**: A master list of Mutual Fund schemes. Transactions reference these to avoid data duplication and ensure consistent naming.
 5.  **`transactions`**: The ledger of all financial movements. It links a specific `scheme` to a specific `folio`.
 6.  **`documents`**: Stores metadata for files.
 7.  **`notes` & `tasks`**: CRM interaction data. `notes` tracks meeting logs while `tasks` manages the workflow for signatures and reviews.
-
-### 🔐 Multi-Layer Encryption Strategy
-
--   **Database Layer**: Sensitive strings are converted to encrypted tokens before `INSERT/UPDATE`.
--   **File Layer**: Binary data (images, PDFs) is encrypted using the same key before writing to the filesystem.
--   **Key Management**: The `FERNET_KEY` in `.env` is the master key. If this key is lost, data recovery is impossible without a backup of the key.
 
 ## 📦 Building for Distribution
 

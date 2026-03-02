@@ -4,8 +4,8 @@ import base64
 
 def render_documents_section(db, client_id):
     """
-    UI for encrypted document management. 
-    Includes uploading, viewing (with decryption), and deleting files.
+    UI for document management. 
+    Includes uploading, viewing, and deleting files.
     """
     st.subheader("Client Documents")
     

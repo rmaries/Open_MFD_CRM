@@ -21,7 +21,7 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
         - **Manage CAN Numbers**: Use the expander at the bottom of the portfolio view to add or delete CANs. The initial CAN from onboarding is automatically included.
     - **Notes**: A dedicated space for meeting logs.
     - **Tasks**: Create and track investor-specific actions.
-    - **Documents**: Securely manage client files.
+    - **Documents**: Manage client files.
 
 
 ## 👤 2. Client Management
@@ -66,9 +66,6 @@ This section is dedicated to connecting with MFU APIs.
 ### Environment Variables (.env)
 You can customize the application behavior using the `.env` file in the root directory:
 - `DB_PATH`: Specify a custom database file (e.g., `DB_PATH=test_scalability.db`).
-- `FERNET_KEY`: The master encryption key for securing sensitive data (Auto-generated if missing).
-
-  > ⚠️ **Important**: Back up this key securely. If it is lost, all encrypted client data and uploaded documents **cannot be recovered**.
 - `MFU_API_KEY`: Your credentials for future MFU integration.
 
 ### Portable Distribution

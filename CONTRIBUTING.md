@@ -27,7 +27,6 @@ This project follows the **BDFL (Benevolent Dictator For Life)** model. All fina
 - **Python**: Follow PEP 8 guidelines. Document all new repository methods with docstrings.
 - **UI Logic**: Keep UI components granular. New features should have their own file in `src/ui/`.
 - **Business Logic**: Decouple SQL from math. SQL goes in `src/modules/db/`, calculations go in `src/modules/calculations.py`.
-- **Security**: Use specialized repositories that inherit from `EncryptionMixin` for sensitive fields.
 - **Consistency**: Avoid magic strings; use Enums in `src/modules/constants.py`.
 
 ## 🛡️ License
