@@ -8,14 +8,20 @@ The tool runs in your web browser. When you launch it, you will see a side navig
 
 ## 📊 1. Dashboard
 
-The Dashboard is your command center. It gives you an eagle-eye view of your business.
+The Dashboard is your command center, now organized into two primary tabs for better clarity.
 
-- **Total AUM**: The current aggregate market value of all assets under your management.
-- **Active Clients**: Total number of unique clients onboarded in the system.
-- **SIP Book (Monthly)**: (Upcoming) Monthly SIP inflow tracking.
-- **Overdue Tasks**: Highlights the count of tasks that have passed their due date.
-- **Client List**: A searchable table of all your clients and their KYC status.
-- **Portfolio & Interaction Center**: Select a specific client to view their detailed profile:
+### 📊 Distributor Overview
+This tab gives you an eagle-eye view of your entire business.
+- **Key Metrics**: View your **Total AUM**, **Active Clients** count, **SIP Book**, and **Overdue Tasks** count at a glance.
+- **Tasks Overview**: Manage all your actions in one place:
+    - **⚠️ Overdue Tasks**: Lists tasks past their due date across all clients.
+    - **🕒 Current Tasks**: Displays all 'Pending' and 'In Progress' tasks.
+    - **Interactive Updates**: You can update task statuses (e.g., from 'Pending' to 'Completed') directly from these tables. The associated client name is shown for each task.
+
+### 👤 Client Overview
+This tab is dedicated to deep-diving into individual client profiles.
+1. **Client Selection**: Use the dropdown to select a client.
+2. **Portfolio & Interaction Center**:
     - **Portfolio & CANs**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
         - **CAN Selection / Management**: Use the dropdown below the PAN to:
             - View the total aggregate portfolio ("ALL Folios").
@@ -23,7 +29,7 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
             - **➕ Add New CAN**: Register a new CAN for the client directly from the dropdown.
             - **⚙️ Manage CANs**: View and delete existing CANs.
     - **Notes**: A dedicated space for meeting logs.
-    - **Tasks**: Create and track investor-specific actions.
+    - **Tasks**: Create and track investor-specific actions. (Updates here are synced with the Distributor Overview).
     - **Documents**: Manage client files.
 
 

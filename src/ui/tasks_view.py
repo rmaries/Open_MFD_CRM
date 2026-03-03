@@ -33,9 +33,19 @@ def render_tasks_section(db, client_id=None):
                     st.write(f"**{task['description']}**")
                     st.caption(f"Due: {task['due_date']} | Priority: {task['priority']}")
                 with col2:
-                    new_status = st.selectbox("Status", ["Pending", "In Progress", "Completed", "Cancelled"], 
-                                            index=["Pending", "In Progress", "Completed", "Cancelled"].index(task['status']),
-                                            key=f"task_{task['id']}")
+                    status_options = ["Pending", "In Progress", "Completed", "Cancelled"]
+                    task_key = f"task_{task['id']}"
+                    
+                    # Initialize session state if not present to avoid index/key conflict warning
+                    if task_key not in st.session_state:
+                        st.session_state[task_key] = task['status']
+                    
+                    new_status = st.selectbox(
+                        "Status", 
+                        status_options,
+                        key=task_key
+                    )
+                    
                     if new_status != task['status']:
                         db.update_task_status(task['id'], new_status)
                         st.rerun()
