@@ -168,7 +168,7 @@ class SchemaManager(BaseRepository):
                 CREATE TABLE IF NOT EXISTS client_cans (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     client_id INTEGER,
-                    can_number TEXT NOT NULL,
+                    can_number TEXT NOT NULL UNIQUE,
                     can_description TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (client_id) REFERENCES clients (client_id)
@@ -191,6 +191,7 @@ class SchemaManager(BaseRepository):
         self._migrate_folios_to_cans()
         self._revert_notes_tasks_linkage()
         self._add_can_description_to_client_cans()
+        self._enforce_can_uniqueness()
 
     def _add_can_description_to_client_cans(self):
         """Adds can_description column to client_cans table if it doesn't exist."""
@@ -326,5 +327,52 @@ class SchemaManager(BaseRepository):
                 cursor.execute("ALTER TABLE tasks_new RENAME TO tasks")
             
             conn.commit()
+        finally:
+            conn.close()
+
+    def _enforce_can_uniqueness(self):
+        """
+        Migration: Enforces uniqueness on can_number in client_cans table.
+        It deduplicates existing entries and recreates the table with a UNIQUE constraint if not already present.
+        """
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            
+            # 1. Check if UNIQUE constraint already exists
+            cursor.execute("PRAGMA index_list(client_cans)")
+            indexes = cursor.fetchall()
+            # index[2] is 'unique' boolean in SQLite
+            has_unique = any(idx[2] == 1 for idx in indexes) 
+            
+            if not has_unique:
+                # 2. Deduplicate: remove duplicate CANs, keeping the first one added (lowest ID)
+                cursor.execute("""
+                    DELETE FROM client_cans 
+                    WHERE id NOT IN (
+                        SELECT MIN(id) 
+                        FROM client_cans 
+                        GROUP BY can_number
+                    )
+                """)
+                
+                # 3. Recreate table with UNIQUE constraint
+                cursor.execute("ALTER TABLE client_cans RENAME TO client_cans_old")
+                cursor.execute('''
+                    CREATE TABLE client_cans (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        client_id INTEGER,
+                        can_number TEXT NOT NULL UNIQUE,
+                        can_description TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (client_id) REFERENCES clients (client_id)
+                    )
+                ''')
+                cursor.execute('''
+                    INSERT INTO client_cans (id, client_id, can_number, can_description, created_at)
+                    SELECT id, client_id, can_number, can_description, created_at FROM client_cans_old
+                ''')
+                cursor.execute("DROP TABLE client_cans_old")
+                conn.commit()
         finally:
             conn.close()

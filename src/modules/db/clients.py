@@ -1,4 +1,5 @@
 import pandas as pd
+import sqlite3
 from .connection import BaseRepository
 
 class ClientRepository(BaseRepository):
@@ -30,6 +31,10 @@ class ClientRepository(BaseRepository):
                 self.add_client_can(client_id, can_number)
             
             return client_id
+        except sqlite3.IntegrityError as e:
+            if "UNIQUE constraint failed: clients.pan" in str(e):
+                raise Exception(f"PAN '{pan}' is already registered for another client.")
+            raise e
         finally:
             conn.close()
 
@@ -83,10 +88,13 @@ class ClientRepository(BaseRepository):
             
             # Auto-link the new CAN if it's not already in the multiple CANs list
             if can_number:
-                existing_cans = self.get_client_cans(client_id)
-                can_list = existing_cans['can_number'].tolist() if not existing_cans.empty else []
-                if can_number not in can_list:
-                    self.add_client_can(client_id, can_number)
+                success, message = self.add_client_can(selected_client_id=client_id, can_number=can_number)
+                # We don't necessarily want to block profile update if CAN link fails because it's already linked
+                # but we should be aware of it.
+        except sqlite3.IntegrityError as e:
+            if "UNIQUE constraint failed: clients.pan" in str(e):
+                raise Exception(f"PAN '{pan}' is already registered for another client.")
+            raise e
         finally:
             conn.close()
 
@@ -100,16 +108,32 @@ class ClientRepository(BaseRepository):
         finally:
             conn.close()
 
-    def add_client_can(self, client_id, can_number, can_description=None):
+    def add_client_can(self, client_id=None, can_number=None, can_description=None, selected_client_id=None):
         """Registers an additional CAN number for a client."""
-        if not can_number: return None
+        # Handle cases where client_id might be passed as second arg or keyword
+        cid = client_id or selected_client_id
+        if not can_number or not cid: 
+            return False, "Missing CAN number or client ID"
+            
+        # Check if CAN already exists
+        check_query = "SELECT client_id FROM client_cans WHERE can_number = ?"
+        existing = self.run_query(check_query, params=(can_number,))
+        if not existing.empty:
+            owner_id = existing.iloc[0, 0]
+            if owner_id == cid:
+                return True, "CAN already linked to this client."
+            else:
+                return False, f"CAN '{can_number}' is already registered to another client."
+
         query = 'INSERT INTO client_cans (client_id, can_number, can_description) VALUES (?, ?, ?)'
         conn = self.get_connection()
         try:
             with conn:
                 cursor = conn.cursor()
-                cursor.execute(query, (client_id, can_number, can_description))
-                return cursor.lastrowid
+                cursor.execute(query, (cid, can_number, can_description))
+                return True, f"CAN '{can_number}' added successfully."
+        except sqlite3.IntegrityError:
+             return False, f"CAN '{can_number}' is already registered."
         finally:
             conn.close()
 

@@ -17,8 +17,11 @@ The Dashboard is your command center. It gives you an eagle-eye view of your bus
 - **Client List**: A searchable table of all your clients and their KYC status.
 - **Portfolio & Interaction Center**: Select a specific client to view their detailed profile:
     - **Portfolio & CANs**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
-        - **CAN Filter**: Use the dropdown below the PAN to view the total aggregate portfolio ("ALL") or filter by a specific CAN.
-        - **Manage CAN Numbers**: Use the expander at the bottom of the portfolio view to add or delete CANs. The initial CAN from onboarding is automatically included.
+        - **CAN Selection / Management**: Use the dropdown below the PAN to:
+            - View the total aggregate portfolio ("ALL Folios").
+            - Filter holdings by a specific CAN.
+            - **➕ Add New CAN**: Register a new CAN for the client directly from the dropdown.
+            - **⚙️ Manage CANs**: View and delete existing CANs.
     - **Notes**: A dedicated space for meeting logs.
     - **Tasks**: Create and track investor-specific actions.
     - **Documents**: Manage client files.

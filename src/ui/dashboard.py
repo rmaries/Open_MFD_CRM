@@ -56,17 +56,22 @@ def render_dashboard(db):
                     
                     # Fetch CANs for dropdown
                     cans_df = db.get_client_cans(selected_client_id)
-                    can_options = [{"label": "ALL", "value": None}]
+                    can_options = [{"label": "ALL Folios", "value": "ALL"}]
                     if not cans_df.empty:
                         for _, can in cans_df.iterrows():
                             desc = f" ({can['can_description']})" if can.get('can_description') else ""
                             can_options.append({"label": f"{can['can_number']}{desc}", "value": can['id']})
+                    
+                    can_options.append({"label": "---", "value": "SEPARATOR"})
+                    can_options.append({"label": "➕ Add New CAN", "value": "ADD_NEW"})
+                    can_options.append({"label": "⚙️ Manage CANs", "value": "MANAGE"})
                             
                     selected_can = st.selectbox(
-                        "Filter Portfolio by CAN",
+                        "CAN Selection / Management",
                         options=can_options,
                         format_func=lambda x: x["label"],
-                        key=f"can_filter_{selected_client_id}"
+                        key=f"can_filter_{selected_client_id}",
+                        disabled=False
                     )
                     selected_can_id = selected_can["value"]
 
@@ -111,26 +116,31 @@ def render_dashboard(db):
                 
                 st.divider()
                 
-                # Metrics now calculated based on selected CAN
-                calc_df = db.get_transactions_for_calculations(selected_client_id, can_id=selected_can_id)
-                metrics = calculate_client_metrics(calc_df)
-                
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric(f"{'Filtered' if selected_can_id else 'Client'} AUM", f"₹{metrics['aum']:,.2f}")
-                c2.metric("Net Investment", f"₹{metrics['net_investment']:,.2f}")
-                c3.metric("Total Gain", f"₹{metrics['total_gain']:,.2f}")
-                c4.metric("XIRR", f"{metrics['xirr']:.2%}")
-                
-                st.write("### Portfolio Details")
-                portfolio_df = db.get_client_portfolio(selected_client_id, can_id=selected_can_id)
-                if not portfolio_df.empty:
-                    st.table(portfolio_df)
+                # Conditional Rendering based on CAN selection
+                if selected_can_id == "ADD_NEW":
+                    render_can_management(db, selected_client_id, show_add=True, show_list=False)
+                elif selected_can_id == "MANAGE":
+                    render_can_management(db, selected_client_id, show_add=False, show_list=True)
+                elif selected_can_id == "SEPARATOR":
+                    st.warning("Please select a valid option.")
                 else:
-                    st.info("No transactions found for this client/CAN.")
+                    # Metrics now calculated based on selected CAN
+                    actual_can_id = None if selected_can_id == "ALL" else selected_can_id
+                    calc_df = db.get_transactions_for_calculations(selected_client_id, can_id=actual_can_id)
+                    metrics = calculate_client_metrics(calc_df)
                     
-                st.divider()
-                with st.expander("⚙️ Manage CAN Numbers"):
-                    render_can_management(db, selected_client_id)
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric(f"{'Filtered' if actual_can_id else 'Client'} AUM", f"₹{metrics['aum']:,.2f}")
+                    c2.metric("Net Investment", f"₹{metrics['net_investment']:,.2f}")
+                    c3.metric("Total Gain", f"₹{metrics['total_gain']:,.2f}")
+                    c4.metric("XIRR", f"{metrics['xirr']:.2%}")
+                    
+                    st.write("### Portfolio Details")
+                    portfolio_df = db.get_client_portfolio(selected_client_id, can_id=actual_can_id)
+                    if not portfolio_df.empty:
+                        st.table(portfolio_df)
+                    else:
+                        st.info("No transactions found for this client/CAN.")
 
             
             with tab2:
