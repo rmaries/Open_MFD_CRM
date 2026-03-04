@@ -36,14 +36,26 @@ This tab is dedicated to deep-diving into individual client profiles.
 
 ## 👤 2. Client Management
 
-Use this section to onboard new clients.
+Use this section to onboard new clients. You can choose between **Manual Entry** for individual clients or **Bulk Import** for mass onboarding.
 
+### 👤 Manual Entry
+Onboard clients one-by-one by filling out the form:
 - **Full Name \***: Enter the name as it appears in records.
 - **Phone Number \***: Mobile or landline contact.
 - **PAN**: (Optional) 10-character Permanent Account Number.
 - **Email**: (Optional) Contact email address.
 - **MFU CAN**: (Optional) Common Account Number.
 - **Submit**: Click "Onboard Client" to save.
+
+### 📁 Bulk Import
+Mass onboard clients using Excel, CSV, or ODS files.
+1. **Download Template**: Click **"📥 Download Template Excel"** to get a pre-formatted file with the correct headers.
+2. **Prepare Your Data**:
+    - **Name \*** and **Phone \*** are mandatory for every row.
+    - Optional fields include **PAN**, **Email**, and **MFU CAN**.
+3. **Upload File**: Drag and drop or browse for your file (supports `.xlsx`, `.csv`, `.ods`).
+4. **Preview & Process**: Review the preview of the first few rows, then click **"🚀 Process Bulk Import"**.
+5. **Review Results**: The system will report how many clients were added and list any errors (e.g., missing data or duplicate PANs) found in specific rows.
 
 *\* Required fields for onboarding.*
 
