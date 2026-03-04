@@ -22,7 +22,7 @@ As the BDFL, @rmaries has final say over the project's direction, feature priori
 - **Task Engine**: Track pending signatures, KYC updates, and annual reviews.
 
 ## 📖 Documentation
-Detailed usage instructions can be found in the [USER_GUIDE.md](USER_GUIDE.md).
+Detailed usage instructions can be found in the [User Guide](user-guide.md).
 
 ## 🛠️ Tech Stack
 - **Frontend/UI**: Streamlit
