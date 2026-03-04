@@ -15,22 +15,37 @@ Open-MFD is built as a lightweight, portable Python application using the follow
 ```text
 open_mfd_crm/
 ├── data/               # Local data storage (DB, backups, documents)
+├── docs/               # MkDocs source files (index, guides)
 ├── src/
-│   ├── modules/        # Core business logic & specialized DB modules
-│   │   ├── db/             # Experimental: Domain-specific repositories
+│   ├── app.py          # Application entry point
+│   ├── assets/         # UI assets (images, logos)
+│   ├── modules/
+│   │   ├── db/             # Data access layer (Repositories)
 │   │   │   ├── clients.py      # Client & CAN CRUD
-│   │   │   ├── transactions.py # Trade logging & portfolio fetches
-│   │   │   └── schema.py       # DDL and Migrations
-│   │   ├── database.py     # Backward-compatible Facade (entry point)
-│   │   ├── calculations.py # Pure financial/portfolio math
-│   │   └── constants.py    # Shared Enums (TransactionType, Status, etc.)
-│   ├── ui/             # Modular Streamlit components
-│   │   ├── dashboard.py    # Main landing page orchestration
-│   │   ├── client_form.py  # Onboarding UI
-│   │   ├── transaction_form.py # Trade entry UI
-│   │   └── components.py   # Re-export shim for legacy compatibility
-│   └── app.py          # Application entry point
+│   │   │   ├── connection.py   # DB connection pooling
+│   │   │   ├── database.py     # Main Repository class
+│   │   │   ├── documents.py    # Document metadata logic
+│   │   │   ├── folios.py       # Folio-specific CRUD
+│   │   │   ├── notes.py        # Meeting notes storage
+│   │   │   ├── schema.py       # SQL DDL and migrations
+│   │   │   ├── tasks.py        # CRM task engine
+│   │   │   └── transactions.py # Trade entry & portfolio pulls
+│   │   ├── bulk_import.py      # Multi-format onboarding logic
+│   │   ├── calculations.py     # Pure financial math (XIRR, Gains)
+│   │   ├── constants.py        # Shared enums and types
+│   │   ├── database.py         # Legacy Facade (Shim)
+│   │   └── mfu_api.py          # MFU API integration (Development)
+│   └── ui/             # Streamlit view components
+│       ├── can_management.py   # CAN association UI
+│       ├── client_form.py      # Onboarding forms
+│       ├── components.py       # Core UI widgets
+│       ├── dashboard.py        # Landing & Analytics view
+│       ├── documents_view.py   # Document management UI
+│       ├── notes_view.py       # Meeting interaction log
+│       ├── tasks_view.py       # Global & Client task tables
+│       └── transaction_form.py # Trade entry forms
 ├── .env                # Environment configuration
+├── mkdocs.yml          # Site configuration
 └── requirements.txt    # Python dependencies
 ```
 
