@@ -109,8 +109,20 @@ def render_dashboard(db):
         if not clients_df.empty:
             st.subheader("Your Clients")
             # Simplified view for the table
-            display_df = clients_df[['client_id', 'name', 'pan', 'kyc_status']]
-            st.dataframe(display_df, width='stretch')
+            display_df = clients_df[['name', 'pan', 'phone', 'email']].copy()
+            
+            st.data_editor(
+                display_df,
+                column_config={
+                    "name": "Client Name",
+                    "pan": "PAN",
+                    "phone": "Mobile Number",
+                    "email": "Email ID"
+                },
+                hide_index=True,
+                use_container_width=True,
+                disabled=True
+            )
             
             selected_client_id = st.selectbox("Select Client to View Profile", 
                                             options=clients_df['client_id'].tolist(),

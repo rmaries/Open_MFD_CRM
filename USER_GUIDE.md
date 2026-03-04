@@ -20,8 +20,9 @@ This tab gives you an eagle-eye view of your entire business.
 
 ### 👤 Client Overview
 This tab is dedicated to deep-diving into individual client profiles.
-1. **Client Selection**: Use the dropdown to select a client.
-2. **Portfolio & Interaction Center**:
+1. **Your Clients Table**: A summary table listing your onboarded clients with their **Name**, **PAN**, **Mobile Number**, and **Email ID**.
+2. **Client Selection**: Use the dropdown below the table to select a specific client for a detailed view.
+3. **Portfolio & Interaction Center**:
     - **Portfolio & CANs**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
         - **CAN Selection / Management**: Use the dropdown below the PAN to:
             - View the total aggregate portfolio ("ALL Folios").
