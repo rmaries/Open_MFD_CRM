@@ -126,6 +126,7 @@ def render_dashboard(db):
                 },
                 hide_index=True,
                 use_container_width=True,
+                height=210,  # Approximately 5-6 rows
                 key="clients_table_df",
                 on_select="rerun",
                 selection_mode="single-row"
@@ -146,10 +147,11 @@ def render_dashboard(db):
                 current_idx = 0
 
             selected_client_id = st.selectbox(
-                "Select Client to View Profile",
+                "Select Client to View Profile (You can type the name here)",
                 options=client_ids,
                 index=current_idx,
-                format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0]
+                format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0],
+                help="Type the client name to filter the list."
             )
             
             # Update session state if dropdown changes
