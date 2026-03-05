@@ -111,7 +111,12 @@ def render_dashboard(db):
             # Simplified view for the table
             display_df = clients_df[['name', 'pan', 'phone', 'email']].copy()
             
-            st.data_editor(
+            # Selection Management
+            client_ids = clients_df['client_id'].tolist()
+            if "selected_client_id" not in st.session_state and client_ids:
+                st.session_state.selected_client_id = client_ids[0]
+
+            event = st.dataframe(
                 display_df,
                 column_config={
                     "name": "Client Name",
@@ -121,12 +126,35 @@ def render_dashboard(db):
                 },
                 hide_index=True,
                 use_container_width=True,
-                disabled=True
+                key="clients_table_df",
+                on_select="rerun",
+                selection_mode="single-row"
+            )
+
+            # Handle Table Selection
+            if event and "selection" in event and event["selection"]["rows"]:
+                selected_row_idx = event["selection"]["rows"][0]
+                new_selection = clients_df.iloc[selected_row_idx]['client_id']
+                if new_selection != st.session_state.get("selected_client_id"):
+                    st.session_state.selected_client_id = new_selection
+                    st.rerun()
+
+            # Sync Dropdown with Session State
+            try:
+                current_idx = client_ids.index(st.session_state.get("selected_client_id"))
+            except (ValueError, KeyError, TypeError):
+                current_idx = 0
+
+            selected_client_id = st.selectbox(
+                "Select Client to View Profile",
+                options=client_ids,
+                index=current_idx,
+                format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0]
             )
             
-            selected_client_id = st.selectbox("Select Client to View Profile", 
-                                            options=clients_df['client_id'].tolist(),
-                                            format_func=lambda x: clients_df[clients_df['client_id'] == x]['name'].iloc[0])
+            # Update session state if dropdown changes
+            if selected_client_id != st.session_state.get("selected_client_id"):
+                st.session_state.selected_client_id = selected_client_id
             
             if selected_client_id:
                 st.divider()
