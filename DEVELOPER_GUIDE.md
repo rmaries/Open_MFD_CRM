@@ -78,7 +78,7 @@ python src/app.py
 Instead of a single SQL file, logic is split by domain (clients, transactions, tasks, etc.) inside `src/modules/db/`. Each repository inherits from `BaseRepository` for connection handling.
 
 ### 2. Facade Pattern
-`src/modules/database.py` acts as a single entry point (Facade). It composes all specialized repositories, allowing legacy code to call `db.add_client()` without knowing it's delegated to `db.clients.add_client()`.
+`src/modules/database.py` acts as a single entry point (Facade). It composes all specialized repositories, allowing legacy code to call `db.add_client()` or `db.delete_client()` without knowing it's delegated to the specialized repositories.
 
 ### 3. Pure Math Logic
 `src/modules/calculations.py` contains **no SQL**. It accepts DataFrames from the `TransactionRepository` and returns mathematical results, making it easy to unit test.
@@ -176,5 +176,6 @@ We use separate verification scripts for testing core modules:
 - `test_db.py`: Verifies the Repository/Facade integrity and backward compatibility.
 - `test_calc.py`: Verifies financial calculations using mock DataFrames.
 - `test_scalability.py`: Stress tests the DB layer with thousands of records.
+- `test_delete_logic.py`: (Internal/Temporary) Verifies cascaded deletion of client data.
 
 Always run these tests before submitting a Pull Request.

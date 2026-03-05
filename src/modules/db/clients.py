@@ -161,3 +161,55 @@ class ClientRepository(BaseRepository):
             return True, "CAN deleted successfully."
         finally:
             conn.close()
+
+    def delete_client(self, client_id):
+        """
+        Permanently deletes a client and ALL associated data (CANs, Folios, Transactions, etc.).
+        Also removes physical documents.
+        """
+        conn = self.get_connection()
+        try:
+            with conn:
+                # 1. Get all associated CAN IDs
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM client_cans WHERE client_id = ?", (client_id,))
+                can_ids = [row[0] for row in cursor.fetchall()]
+                
+                # 2. Get all associated Folio IDs
+                folio_ids = []
+                if can_ids:
+                    placeholders = ', '.join(['?'] * len(can_ids))
+                    cursor.execute(f"SELECT folio_id FROM folios WHERE can_id IN ({placeholders})", can_ids)
+                    folio_ids = [row[0] for row in cursor.fetchall()]
+
+                # 3. Cascaded Deletion (Order matters for FKs)
+                # Transactions
+                if folio_ids:
+                    placeholders = ', '.join(['?'] * len(folio_ids))
+                    cursor.execute(f"DELETE FROM transactions WHERE folio_id IN ({placeholders})", folio_ids)
+                
+                # Folios
+                if can_ids:
+                    placeholders = ', '.join(['?'] * len(can_ids))
+                    cursor.execute(f"DELETE FROM folios WHERE can_id IN ({placeholders})", can_ids)
+                
+                # CANs, Notes, Tasks, Documents (linked directly to client_id)
+                cursor.execute("DELETE FROM client_cans WHERE client_id = ?", (client_id,))
+                cursor.execute("DELETE FROM notes WHERE client_id = ?", (client_id,))
+                cursor.execute("DELETE FROM tasks WHERE client_id = ?", (client_id,))
+                cursor.execute("DELETE FROM documents WHERE client_id = ?", (client_id,))
+                cursor.execute("DELETE FROM clients WHERE client_id = ?", (client_id,))
+            
+            # 4. Cleanup physical documents
+            import shutil
+            import os
+            base_dir = "data/documents"
+            client_dir = os.path.join(base_dir, f"client_{client_id}")
+            if os.path.exists(client_dir):
+                shutil.rmtree(client_dir)
+                
+            return True, "Client and all associated data deleted successfully."
+        except Exception as e:
+            return False, f"Error deleting client: {str(e)}"
+        finally:
+            conn.close()

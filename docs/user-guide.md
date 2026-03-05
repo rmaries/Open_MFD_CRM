@@ -40,6 +40,11 @@ This tab is dedicated to deep-diving into individual client profiles.
     - **Notes**: A dedicated space for meeting logs.
     - **Tasks**: Create and track investor-specific actions. (Updates here are synced with the Distributor Overview).
     - **Documents**: Manage client files.
+31. **Deleting a Client Profile**:
+    - To permanently remove a client, expand the **"📝 Edit Client Profile"** section.
+    - Scroll to the bottom to find the **"⚠️ Dangerous Zone"**.
+    - Check the box **"I understand that this action is permanent and irreversible"**.
+    - Click **"🗑️ Delete Client Profile"**. This will delete all their CANs, folios, transactions, notes, tasks, and documents.
 
 
 ## 👤 2. Client Management

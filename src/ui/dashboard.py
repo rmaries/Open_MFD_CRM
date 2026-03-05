@@ -162,7 +162,7 @@ def render_dashboard(db):
                         selected_can_id = selected_can["value"]
 
                     with k_col2:
-                        kyc_status = st.toggle("KYC Verified", value=bool(client_data['kyc_status']), key=f"kyc_{selected_client_id}")
+                        kyc_status = st.toggle("KYC Validated", value=bool(client_data['kyc_status']), key=f"kyc_{selected_client_id}")
                         if kyc_status != bool(client_data['kyc_status']):
                             db.update_client_kyc(selected_client_id, kyc_status)
                             st.success("KYC status updated!")
@@ -197,6 +197,26 @@ def render_dashboard(db):
                                         st.rerun()
                                     except Exception as e:
                                         st.error(f"Error updating profile: {e}")
+
+                        st.divider()
+                        st.subheader("⚠️ Dangerous Zone")
+                        st.caption("Permanently delete this client and all associated data.")
+                        
+                        confirm_del = st.checkbox("I understand that this action is permanent and irreversible", key=f"del_confirm_{selected_client_id}")
+                        
+                        if st.button("🗑️ Delete Client Profile", 
+                                     disabled=not confirm_del, 
+                                     type="secondary", # Avoid accidental clicks with high contrast
+                                     key=f"del_btn_{selected_client_id}",
+                                     use_container_width=True):
+                            success, message = db.delete_client(selected_client_id)
+                            if success:
+                                st.success(message)
+                                # Clear selection from session state to avoid error on rerun
+                                # Streamlit selectbox might still try to use the deleted ID if not careful
+                                st.rerun()
+                            else:
+                                st.error(message)
 
                     st.divider()
                     
