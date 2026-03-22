@@ -64,5 +64,26 @@ class TestNavIntegration(unittest.TestCase):
         self.assertEqual(schemes.iloc[0]['current_nav'], 105.20)
         self.assertEqual(schemes.iloc[0]['last_updated'], "2026-03-05")
 
+    def test_crud_operations(self):
+        # Add
+        scheme_id = self.db.add_scheme("TEST001", "Test Scheme", "Debt", 10.0)
+        
+        # Update
+        success = self.db.update_scheme(scheme_id, scheme_name="Updated Test Name", category="Equity")
+        self.assertTrue(success)
+        
+        schemes = self.db.get_all_schemes()
+        updated_scheme = schemes[schemes['scheme_id'] == scheme_id].iloc[0]
+        self.assertEqual(updated_scheme['scheme_name'], "Updated Test Name")
+        self.assertEqual(updated_scheme['category'], "Equity")
+        
+        # Delete
+        success = self.db.delete_scheme(scheme_id)
+        self.assertTrue(success)
+        
+        schemes = self.db.get_all_schemes()
+        self.assertEqual(len(schemes[schemes['scheme_id'] == scheme_id]), 0)
+
 if __name__ == '__main__':
     unittest.main()
+

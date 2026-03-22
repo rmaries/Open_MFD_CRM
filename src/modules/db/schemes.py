@@ -14,19 +14,19 @@ class SchemeRepository(BaseRepository):
         BaseRepository.__init__(self, db_path)
 
     def add_scheme(self, scheme_code, scheme_name, category=None, current_nav=None):
-        """Adds a new scheme to the database. Automatically fetches NAV if not provided."""
+        """Adds a new scheme to the database. Always attempts to fetch latest NAV from AMFI."""
         
         last_updated = None
-        # Auto-fetch NAV if not provided or 0
-        if not current_nav or current_nav == 0.0:
-            try:
-                latest_navs = fetch_latest_navs()
-                if scheme_code in latest_navs:
-                    current_nav = latest_navs[scheme_code]['nav']
-                    last_updated = latest_navs[scheme_code]['date']
-                    logger.info(f"Auto-fetched NAV for {scheme_code}: {current_nav} as of {last_updated}")
-            except Exception as e:
-                logger.error(f"Failed to auto-fetch NAV for {scheme_code}: {e}")
+        # Always attempt to fetch latest NAV from AMFI when adding, 
+        # even if a current_nav is provided (to ensure it's the absolute latest)
+        try:
+            latest_navs = fetch_latest_navs()
+            if scheme_code in latest_navs:
+                current_nav = latest_navs[scheme_code]['nav']
+                last_updated = latest_navs[scheme_code]['date']
+                logger.info(f"Fetched latest NAV for {scheme_code}: {current_nav} as of {last_updated}")
+        except Exception as e:
+            logger.error(f"Failed to fetch NAV from AMFI for {scheme_code}: {e}")
 
         query = '''
             INSERT INTO schemes (scheme_code, scheme_name, category, current_nav, last_updated)
@@ -89,7 +89,7 @@ class SchemeRepository(BaseRepository):
 
     def update_scheme_navs(self):
         """
-        Fetches latest NAVs from AMFI and updates the schemes table.
+        Fetches latest NAVs from AMFI and updates the schemes table if they differ.
         """
         latest_navs = fetch_latest_navs()
         if not latest_navs:
@@ -99,27 +99,68 @@ class SchemeRepository(BaseRepository):
         updated_count = 0
         try:
             with conn:
-                # We update schemes where we have a match in the latest_navs dict
-                # We only update if the NAV or date is different (or last_updated is old)
                 cursor = conn.cursor()
-                cursor.execute("SELECT scheme_code FROM schemes")
-                existing_codes = [row[0] for row in cursor.fetchall()]
+                cursor.execute("SELECT scheme_id, scheme_code, current_nav, last_updated FROM schemes")
+                schemes = cursor.fetchall()
                 
-                for code in existing_codes:
+                for scheme_id, code, current_val, current_date in schemes:
                     if code in latest_navs:
-                        nav_val = latest_navs[code]['nav']
-                        nav_date = latest_navs[code]['date']
+                        new_nav = latest_navs[code]['nav']
+                        new_date = latest_navs[code]['date']
                         
-                        cursor.execute('''
-                            UPDATE schemes 
-                            SET current_nav = ?, last_updated = ? 
-                            WHERE scheme_code = ?
-                        ''', (nav_val, nav_date, code))
-                        if cursor.rowcount > 0:
-                            updated_count += 1
+                        # Update if NAV or date is different
+                        if new_nav != current_val or new_date != current_date:
+                            cursor.execute('''
+                                UPDATE schemes 
+                                SET current_nav = ?, last_updated = ? 
+                                WHERE scheme_id = ?
+                            ''', (new_nav, new_date, scheme_id))
+                            if cursor.rowcount > 0:
+                                updated_count += 1
             return updated_count
         except Exception as e:
             logger.error(f"Error updating scheme NAVs: {e}")
             return 0
+        finally:
+            conn.close()
+
+    def delete_scheme(self, scheme_id):
+        """Deletes a scheme from the database."""
+        query = 'DELETE FROM schemes WHERE scheme_id = ?'
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (scheme_id,))
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def update_scheme(self, scheme_id, scheme_code=None, scheme_name=None, category=None):
+        """Updates scheme details."""
+        updates = []
+        params = []
+        if scheme_code:
+            updates.append("scheme_code = ?")
+            params.append(scheme_code)
+        if scheme_name:
+            updates.append("scheme_name = ?")
+            params.append(scheme_name)
+        if category:
+            updates.append("category = ?")
+            params.append(category)
+            
+        if not updates:
+            return False
+            
+        query = f"UPDATE schemes SET {', '.join(updates)} WHERE scheme_id = ?"
+        params.append(scheme_id)
+        
+        conn = self.get_connection()
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(query, tuple(params))
+                return cursor.rowcount > 0
         finally:
             conn.close()

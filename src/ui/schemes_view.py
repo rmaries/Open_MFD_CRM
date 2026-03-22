@@ -11,16 +11,31 @@ def render_schemes_management(db):
     with tabs[0]:
         st.subheader("Current Schemes")
         
-        # Auto-update NAVs if not done in this session
+        # Auto-update NAVs if not done in this session or if data is old
+        schemes_df = db.get_all_schemes()
+        needs_update = False
+        
+        from datetime import datetime
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        
         if 'navs_updated' not in st.session_state:
-            with st.spinner("Updating NAVs from AMFI..."):
+            needs_update = True
+        elif not schemes_df.empty:
+            # Check if any scheme was NOT updated today
+            latest_db_date = schemes_df['last_updated'].max()
+            if isinstance(latest_db_date, str) and latest_db_date[:10] < today_str:
+                needs_update = True
+        
+        if needs_update:
+            with st.spinner("Checking for latest NAVs from AMFI..."):
                 try:
-                    db.update_scheme_navs()
+                    updated = db.update_scheme_navs()
+                    if updated > 0:
+                        st.success(f"Updated {updated} NAVs.")
+                        schemes_df = db.get_all_schemes() # Refresh after update
                     st.session_state.navs_updated = True
                 except Exception as e:
                     st.error(f"Failed to update NAVs: {e}")
-
-        schemes_df = db.get_all_schemes()
         if not schemes_df.empty:
             # Get the most recent date from the schemes to show in header
             # last_updated might be string or datetime
@@ -46,6 +61,45 @@ def render_schemes_management(db):
             # Only show relevant columns
             cols_to_show = ['Scheme Code', 'Scheme Name', 'Category', nav_header]
             st.dataframe(display_df[cols_to_show], width='stretch', hide_index=True)
+            
+            # --- Edit/Delete Section ---
+            st.divider()
+            st.subheader("🛠️ Manage Schemes")
+            selected_scheme_name = st.selectbox("Select a scheme to edit or delete", 
+                                              options=[""] + display_df['Scheme Name'].tolist())
+            
+            if selected_scheme_name:
+                scheme_row = display_df[display_df['Scheme Name'] == selected_scheme_name].iloc[0]
+                scheme_id = schemes_df[schemes_df['scheme_name'] == selected_scheme_name].iloc[0]['scheme_id']
+                
+                with st.expander(f"Edit/Delete: {selected_scheme_name}", expanded=True):
+                    with st.form(f"edit_scheme_{scheme_id}"):
+                        new_code = st.text_input("Scheme Code", value=scheme_row['Scheme Code'])
+                        new_name = st.text_input("Scheme Name", value=scheme_row['Scheme Name'])
+                        new_cat = st.text_input("Category", value=scheme_row['Category'])
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.form_submit_button("Update Scheme"):
+                                try:
+                                    db.update_scheme(scheme_id, scheme_code=new_code, scheme_name=new_name, category=new_cat)
+                                    st.success("Scheme updated!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error: {e}")
+                        with col2:
+                            # Delete is a bit tricky in form, let's use a separate column outside or a specific button
+                            pass
+                    
+                    if st.button("🗑️ Delete Scheme", key=f"del_{scheme_id}"):
+                        if st.warning("Are you sure you want to delete this scheme?"):
+                            if st.button("Confirm Delete"):
+                                try:
+                                    db.delete_scheme(scheme_id)
+                                    st.success("Scheme deleted!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error: {e}")
         else:
             st.info("No schemes found. Add one manually or use Bulk Import.")
 

@@ -137,3 +137,10 @@ class Database:
         return self.schemes.bulk_import_schemes(*args, **kwargs)
     def update_scheme_navs(self):
         return self.schemes.update_scheme_navs()
+
+    def delete_scheme(self, scheme_id):
+        return self.schemes.delete_scheme(scheme_id)
+
+    def update_scheme(self, *args, **kwargs):
+        return self.schemes.update_scheme(*args, **kwargs)
+
