@@ -13,3 +13,5 @@ dist/
 data/
 site/
 .agent/
+.antigravity/
+CONTEXT.md
