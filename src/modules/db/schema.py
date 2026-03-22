@@ -73,7 +73,7 @@ class SchemaManager(BaseRepository):
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS schemes (
                     scheme_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    isin_code TEXT UNIQUE,
+                    scheme_code TEXT UNIQUE,
                     scheme_name TEXT NOT NULL,
                     category TEXT,
                     current_nav REAL,
@@ -192,6 +192,7 @@ class SchemaManager(BaseRepository):
         self._revert_notes_tasks_linkage()
         self._add_can_description_to_client_cans()
         self._enforce_can_uniqueness()
+        self._rename_isin_code_to_scheme_code()
 
     def _add_can_description_to_client_cans(self):
         """Adds can_description column to client_cans table if it doesn't exist."""
@@ -373,6 +374,40 @@ class SchemaManager(BaseRepository):
                     SELECT id, client_id, can_number, can_description, created_at FROM client_cans_old
                 ''')
                 cursor.execute("DROP TABLE client_cans_old")
+                conn.commit()
+        finally:
+            conn.close()
+
+    def _rename_isin_code_to_scheme_code(self):
+        """Migration: Renames isin_code column to scheme_code in schemes table."""
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(schemes)")
+            columns = [row[1] for row in cursor.fetchall()]
+            
+            if 'isin_code' in columns and 'scheme_code' not in columns:
+                import sqlite3
+                try:
+                    cursor.execute("ALTER TABLE schemes RENAME COLUMN isin_code TO scheme_code")
+                except sqlite3.OperationalError:
+                    # Fallback for older SQLite versions
+                    cursor.execute("ALTER TABLE schemes RENAME TO schemes_old")
+                    cursor.execute('''
+                        CREATE TABLE schemes (
+                            scheme_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            scheme_code TEXT UNIQUE,
+                            scheme_name TEXT NOT NULL,
+                            category TEXT,
+                            current_nav REAL,
+                            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    ''')
+                    cursor.execute('''
+                        INSERT INTO schemes (scheme_id, scheme_code, scheme_name, category, current_nav, last_updated)
+                        SELECT scheme_id, isin_code, scheme_name, category, current_nav, last_updated FROM schemes_old
+                    ''')
+                    cursor.execute("DROP TABLE schemes_old")
                 conn.commit()
         finally:
             conn.close()

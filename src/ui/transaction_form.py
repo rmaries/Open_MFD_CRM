@@ -56,9 +56,9 @@ def transaction_entry(db):
     if folio_id:
         st.divider()
         with st.form("transaction_form", clear_on_submit=True):
-            schemes_df = db.run_query("SELECT * FROM schemes")
+            schemes_df = db.get_all_schemes()
             if schemes_df.empty:
-                st.error("No schemes found in database. Please add schemes first.")
+                st.error("No schemes found in database. Please add schemes in 'Scheme Management' first.")
                 return
 
             scheme_options = {row['scheme_name']: row['scheme_id'] for _, row in schemes_df.iterrows()}

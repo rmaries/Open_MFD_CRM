@@ -7,6 +7,7 @@ from .transactions import TransactionRepository
 from .notes import NoteRepository
 from .tasks import TaskRepository
 from .documents import DocumentRepository
+from .schemes import SchemeRepository
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +30,7 @@ class Database:
         self.notes = NoteRepository(db_path)
         self.tasks = TaskRepository(db_path)
         self.documents = DocumentRepository(db_path)
+        self.schemes = SchemeRepository(db_path)
         
         # Initialize database schema
         self.schema.init_db()
@@ -123,3 +125,15 @@ class Database:
 
     def delete_document(self, doc_id):
         return self.documents.delete_document(doc_id)
+
+    # --- Scheme Passthroughs ---
+    def add_scheme(self, *args, **kwargs):
+        return self.schemes.add_scheme(*args, **kwargs)
+
+    def get_all_schemes(self):
+        return self.schemes.get_all_schemes()
+
+    def bulk_import_schemes(self, *args, **kwargs):
+        return self.schemes.bulk_import_schemes(*args, **kwargs)
+    def update_scheme_navs(self):
+        return self.schemes.update_scheme_navs()

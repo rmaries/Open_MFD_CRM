@@ -72,7 +72,7 @@ def render_bulk_import(db):
             st.error(error)
         else:
             st.write("### Preview (First 5 rows)")
-            st.dataframe(df.head(), use_container_width=True)
+            st.dataframe(df.head(), width='stretch')
             
             if st.button("🚀 Process Bulk Import"):
                 with st.spinner("Processing..."):

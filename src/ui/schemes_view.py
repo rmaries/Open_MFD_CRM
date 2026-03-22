@@ -1,0 +1,115 @@
+import streamlit as st
+import pandas as pd
+import io
+
+def render_schemes_management(db):
+    st.header("📋 Scheme Management")
+    st.write("View, add, and import mutual fund schemes.")
+
+    tabs = st.tabs(["View Schemes", "Add Manual Scheme", "Bulk Import"])
+
+    with tabs[0]:
+        st.subheader("Current Schemes")
+        
+        # Auto-update NAVs if not done in this session
+        if 'navs_updated' not in st.session_state:
+            with st.spinner("Updating NAVs from AMFI..."):
+                try:
+                    db.update_scheme_navs()
+                    st.session_state.navs_updated = True
+                except Exception as e:
+                    st.error(f"Failed to update NAVs: {e}")
+
+        schemes_df = db.get_all_schemes()
+        if not schemes_df.empty:
+            # Get the most recent date from the schemes to show in header
+            # last_updated might be string or datetime
+            latest_date = "Unknown"
+            if 'last_updated' in schemes_df.columns and not schemes_df['last_updated'].dropna().empty:
+                latest_date_val = schemes_df['last_updated'].max()
+                if isinstance(latest_date_val, str):
+                    # Handle both YYYY-MM-DD and YYYY-MM-DD HH:MM:SS
+                    latest_date = latest_date_val[:10]
+                else:
+                    latest_date = latest_date_val.strftime("%Y-%m-%d")
+
+            nav_header = f"Current NAV (as of {latest_date})"
+            
+            # Rename columns for better display
+            display_df = schemes_df.rename(columns={
+                'scheme_code': 'Scheme Code',
+                'scheme_name': 'Scheme Name',
+                'category': 'Category',
+                'current_nav': nav_header
+            })
+            
+            # Only show relevant columns
+            cols_to_show = ['Scheme Code', 'Scheme Name', 'Category', nav_header]
+            st.dataframe(display_df[cols_to_show], width='stretch', hide_index=True)
+        else:
+            st.info("No schemes found. Add one manually or use Bulk Import.")
+
+    with tabs[1]:
+        st.subheader("Add New Scheme")
+        with st.form("add_scheme_form", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                scheme_code = st.text_input("Scheme Code (e.g., ISIN)", help="Unique identifier for the scheme")
+                scheme_name = st.text_input("Scheme Name")
+            with col2:
+                category = st.text_input("Category (e.g., Equity, Debt)")
+                current_nav = st.number_input("Current NAV", min_value=0.0, step=0.0001, format="%.4f")
+            
+            submitted = st.form_submit_button("Add Scheme")
+            if submitted:
+                if not scheme_code or not scheme_name:
+                    st.error("Scheme Code and Scheme Name are required.")
+                else:
+                    try:
+                        db.add_scheme(scheme_code, scheme_name, category, current_nav)
+                        st.success(f"Scheme '{scheme_name}' added successfully!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+    with tabs[2]:
+        st.subheader("Bulk Import Schemes")
+        st.write("Upload a CSV or Excel file to import multiple schemes at once.")
+        
+        # Download template
+        template_data = pd.DataFrame(columns=['scheme_code', 'scheme_name', 'category', 'current_nav'])
+        template_data.loc[0] = ['INF209K01157', 'HDFC Top 100 Fund', 'Equity', 100.55]
+        
+        csv_template = template_data.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download CSV Template",
+            data=csv_template,
+            file_name="scheme_import_template.csv",
+            mime="text/csv",
+        )
+
+        uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx"])
+        
+        if uploaded_file is not None:
+            try:
+                if uploaded_file.name.endswith('.csv'):
+                    df = pd.read_csv(uploaded_file)
+                else:
+                    df = pd.read_excel(uploaded_file)
+                
+                # Validation
+                required_cols = ['scheme_code', 'scheme_name']
+                missing_cols = [col for col in required_cols if col not in df.columns]
+                
+                if missing_cols:
+                    st.error(f"Missing required columns: {', '.join(missing_cols)}")
+                else:
+                    st.write("### Preview Data")
+                    st.dataframe(df.head(), width='stretch')
+                    
+                    if st.button("Confirm and Import"):
+                        count = db.bulk_import_schemes(df)
+                        st.success(f"Successfully imported/updated {count} schemes!")
+                        st.rerun()
+            except Exception as e:
+                st.error(f"Error processing file: {e}")

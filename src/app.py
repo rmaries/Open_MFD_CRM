@@ -4,6 +4,7 @@ from modules.database import Database
 from ui.dashboard import render_dashboard
 from ui.client_form import input_client_details
 from ui.transaction_form import transaction_entry
+from ui.schemes_view import render_schemes_management
 import shutil
 import os
 from datetime import datetime
@@ -56,6 +57,7 @@ def main():
             "Dashboard": "🏠",
             "Client Management": "👤",
             "Investment Tracking": "📈",
+            "Scheme Management": "📋",
             "MFU Integration": "🔗",
             "User Guide": "📖",
             "Settings": "⚙️"
@@ -75,6 +77,8 @@ def main():
         input_client_details(db)
     elif choice == "Investment Tracking":
         transaction_entry(db)
+    elif choice == "Scheme Management":
+        render_schemes_management(db)
     elif choice == "MFU Integration":
         st.header("🔗 MFU Integration")
         st.info("MFU API Connection logic will be implemented here.")

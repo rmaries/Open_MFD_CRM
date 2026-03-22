@@ -37,7 +37,7 @@ def render_task_table(db, tasks_df, key_prefix):
         },
         hide_index=True,
         key=f"{key_prefix}_editor",
-        use_container_width=True
+        width='stretch'
     )
     
     # Handle changes via session state if necessary, but st.data_editor with keys is tricky.
@@ -125,7 +125,7 @@ def render_dashboard(db):
                     "email": "Email ID"
                 },
                 hide_index=True,
-                use_container_width=True,
+                width='stretch',
                 height=210,  # Approximately 5-6 rows
                 key="clients_table_df",
                 on_select="rerun",

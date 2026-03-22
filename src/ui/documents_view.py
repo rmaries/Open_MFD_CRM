@@ -39,7 +39,7 @@ def render_documents_section(db, client_id):
                 
                 if doc_content:
                     if ext in ['.png', '.jpg', '.jpeg']:
-                        st.image(doc_content, use_container_width=True)
+                        st.image(doc_content, width='stretch')
                     elif ext == '.pdf':
                         base64_pdf = base64.b64encode(doc_content).decode('utf-8')
                         pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'

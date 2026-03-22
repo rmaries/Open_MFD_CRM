@@ -28,6 +28,7 @@ open_mfd_crm/
 │   │   │   ├── folios.py       # Folio-specific CRUD
 │   │   │   ├── notes.py        # Meeting notes storage
 │   │   │   ├── schema.py       # SQL DDL and migrations
+|   |   |   ├── schemes.py      # CRUD for MF schemes
 │   │   │   ├── tasks.py        # CRM task engine
 │   │   │   └── transactions.py # Trade entry & portfolio pulls
 │   │   ├── bulk_import.py      # Multi-format onboarding logic
