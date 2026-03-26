@@ -272,7 +272,68 @@ def render_dashboard(db):
                         st.write("### Portfolio Details")
                         portfolio_df = db.get_client_portfolio(selected_client_id, can_id=actual_can_id)
                         if not portfolio_df.empty:
-                            st.table(portfolio_df)
+                            display_pdf = portfolio_df.copy()
+                            
+                            event = st.dataframe(
+                                display_pdf,
+                                column_config={
+                                    "trans_id": None, # Hide the ID visually
+                                    "can_number": "CAN",
+                                    "folio_number": "Folio",
+                                    "amc_name": "AMC",
+                                    "scheme_name": "Scheme",
+                                    "date": "Date",
+                                    "type": "Type",
+                                    "amount": "Amount",
+                                    "units": "Units",
+                                    "nav_at_purchase": "NAV"
+                                },
+                                hide_index=True,
+                                width='stretch',
+                                key=f"portfolio_tbl_{selected_client_id}_{actual_can_id}",
+                                on_select="rerun",
+                                selection_mode="single-row"
+                            )
+                            
+                            if event and "selection" in event and event["selection"]["rows"]:
+                                sel_idx = event["selection"]["rows"][0]
+                                trans_id = int(portfolio_df.iloc[sel_idx]['trans_id'])
+                                tx_data = db.transactions.get_transaction(trans_id)
+                                
+                                if tx_data:
+                                    st.write(f"#### ✏️ Edit Transaction")
+                                    with st.form(f"edit_tx_{trans_id}"):
+                                        colA, colB, colC = st.columns(3)
+                                        idx_type = ["PURCHASE", "REDEMPTION", "SIP", "STP", "SWP"].index(tx_data['type']) if tx_data['type'] in ["PURCHASE", "REDEMPTION", "SIP", "STP", "SWP"] else 0
+                                        new_date = colA.text_input("Date (YYYY-MM-DD)", value=tx_data['date'])
+                                        new_type = colB.selectbox("Type", ["PURCHASE", "REDEMPTION", "SIP", "STP", "SWP"], index=idx_type)
+                                        new_amount = colC.number_input("Amount", value=float(tx_data['amount']) if tx_data['amount'] else 0.0, format="%.2f", step=100.0)
+                                        
+                                        colD, colE = st.columns(2)
+                                        new_units = colD.number_input("Units", value=float(tx_data['units']) if tx_data['units'] else 0.0, format="%.4f", step=0.1)
+                                        new_nav = colE.number_input("NAV", value=float(tx_data['nav_at_purchase']) if tx_data['nav_at_purchase'] else 0.0, format="%.4f", step=0.1)
+                                        
+                                        submitted = st.form_submit_button("Save Changes", type="primary")
+                                        
+                                    if submitted:
+                                        db.transactions.update_transaction(
+                                            trans_id, 
+                                            tx_data['folio_id'], 
+                                            tx_data['scheme_id'], 
+                                            new_date, 
+                                            new_type, 
+                                            new_amount, 
+                                            new_units, 
+                                            new_nav, 
+                                            tx_data['order_number']
+                                        )
+                                        st.success("Transaction updated successfully!")
+                                        st.rerun()
+                                    
+                                    if st.button("🗑️ Delete Transaction", key=f"del_tx_{trans_id}", type="secondary"):
+                                        db.transactions.delete_transaction(trans_id)
+                                        st.success("Transaction deleted successfully!")
+                                        st.rerun()
                         else:
                             st.info("No transactions found for this client/CAN.")
 

@@ -21,9 +21,12 @@ class SchemeRepository(BaseRepository):
         # even if a current_nav is provided (to ensure it's the absolute latest)
         try:
             latest_navs = fetch_latest_navs()
-            if scheme_code in latest_navs:
-                current_nav = latest_navs[scheme_code]['nav']
-                last_updated = latest_navs[scheme_code]['date']
+            if scheme_code and scheme_code in latest_navs:
+                nav_info = latest_navs[scheme_code]
+
+            if nav_info:
+                current_nav = nav_info['nav']
+                last_updated = nav_info['date']
                 logger.info(f"Fetched latest NAV for {scheme_code}: {current_nav} as of {last_updated}")
         except Exception as e:
             logger.error(f"Failed to fetch NAV from AMFI for {scheme_code}: {e}")
@@ -102,13 +105,14 @@ class SchemeRepository(BaseRepository):
         try:
             with conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT scheme_id, scheme_code, current_nav, last_updated FROM schemes")
+                cursor.execute("SELECT scheme_id, scheme_code, scheme_name, current_nav, last_updated FROM schemes")
                 schemes = cursor.fetchall()
                 
-                for scheme_id, code, current_val, current_date in schemes:
-                    if code in latest_navs:
-                        new_nav = latest_navs[code]['nav']
-                        new_date = latest_navs[code]['date']
+                for scheme_id, code, name, current_val, current_date in schemes:
+                    if code and code in latest_navs:
+                        nav_info = latest_navs[code]
+                        new_nav = nav_info['nav']
+                        new_date = nav_info['date']
                         
                         # Update if NAV or date is different
                         if new_nav != current_val or new_date != current_date:
@@ -140,13 +144,32 @@ class SchemeRepository(BaseRepository):
             conn.close()
 
     def update_scheme(self, scheme_id, scheme_code=None, rta_code=None, scheme_name=None, category=None):
-        """Updates scheme details."""
+        """Updates scheme details. If scheme_code is updated, attempts to fetch latest NAV."""
         scheme_id = int(scheme_id)
         updates = []
         params = []
+        
+        # If code is updated, try to get the NAV for it
+        current_nav = None
+        last_updated = None
+        if scheme_code:
+            try:
+                latest_navs = fetch_latest_navs()
+                if scheme_code in latest_navs:
+                    current_nav = latest_navs[scheme_code]['nav']
+                    last_updated = latest_navs[scheme_code]['date']
+            except Exception as e:
+                logger.error(f"Failed to fetch NAV during update for {scheme_code}: {e}")
+
         if scheme_code is not None:
             updates.append("scheme_code = ?")
             params.append(scheme_code)
+            if current_nav:
+                updates.append("current_nav = ?")
+                params.append(current_nav)
+                updates.append("last_updated = ?")
+                params.append(last_updated)
+        
         if rta_code is not None:
             updates.append("rta_code = ?")
             params.append(rta_code)
@@ -168,6 +191,22 @@ class SchemeRepository(BaseRepository):
             with conn:
                 cursor = conn.cursor()
                 cursor.execute(query, tuple(params))
-                return cursor.rowcount > 0
+                return cursor.lastrowid
         finally:
             conn.close()
+
+    def get_scheme_by_rta_code(self, rta_code):
+        """Finds a scheme by its RTA code."""
+        query = "SELECT * FROM schemes WHERE rta_code = ?"
+        df = self.run_query(query, params=(rta_code,))
+        if not df.empty:
+            return df.iloc[0].to_dict()
+        return None
+
+    def get_scheme_by_name(self, name):
+        """Finds a scheme by its name (case-insensitive)."""
+        query = "SELECT * FROM schemes WHERE LOWER(scheme_name) = LOWER(?)"
+        df = self.run_query(query, params=(name,))
+        if not df.empty:
+            return df.iloc[0].to_dict()
+        return None

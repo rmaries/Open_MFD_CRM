@@ -213,3 +213,11 @@ class ClientRepository(BaseRepository):
             return False, f"Error deleting client: {str(e)}"
         finally:
             conn.close()
+
+    def get_can_by_number(self, can_number):
+        """Finds a CAN record and its associated client_id by CAN number."""
+        query = "SELECT id as can_id, client_id FROM client_cans WHERE can_number = ?"
+        df = self.run_query(query, params=(str(can_number),))
+        if not df.empty:
+            return df.iloc[0].to_dict()
+        return None

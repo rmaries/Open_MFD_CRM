@@ -25,10 +25,11 @@ This tab gives you an eagle-eye view of your entire business.
 
 This tab is dedicated to deep-diving into individual client profiles.
 
-1. **Your Clients Table**: A summary table listing your onboarded clients with their **Name**, **PAN**, **Mobile Number**, and **Email ID**.
-2. **Client Selection**: Use the dropdown below the table to select a specific client for a detailed view.
+1. **Your Clients Table**: A summary table listing your onboarded clients with their **Name**, **PAN**, **Mobile Number**, and **Email ID**. The table displays up to 5 clients at a time for better readability.
+2. **Client Selection**: Select a client by clicking their name directly in the table, or use the searchable dropdown below the table for a detailed view.
 3. **Portfolio & Interaction Center**:
     - **Portfolio & CANs**: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.
+        - **Transaction Management**: Click on any transaction row in the portfolio table to edit its details (e.g., date, amount, NAV) or delete it entirely.
 
         - **CAN Selection / Management**: Use the dropdown below the PAN to:
 
@@ -92,20 +93,27 @@ This section allows you to record physical or digital transactions.
 
     - **Scheme**: Select the mutual fund scheme.
     - **Transaction Type**: Choose from PURCHASE, REDEMPTION, SIP, STP, SWP.
-    - **Amount/NAV**: Enter the transaction amount and the NAV on that date.
+    - **Amount/NAV**: Enter the transaction amount. The NAV is automatically fetched from AMFI based on the transaction date and smartly updated, but you can override it if needed.
     - **Submit**: Click "Submit Transaction" to update the portfolio.
 
-## 🔗 4. MFU Integration
+## 📈 4. Scheme Management
+
+This dedicated section helps you manage mutual fund schemes efficiently:
+- **Smart NAV Updates**: Automatically fetche the latest NAVs directly from AMFI, avoiding redundant calls.
+- **Edit/Delete Schemes**: Directly modify or remove existing schemes from your database.
+- **RTA Code Mapping**: Mutual fund schemes now store RTA codes to facilitate automated transaction imports from MFU statements.
+
+## 🔗 5. MFU Integration
 
 This section is dedicated to connecting with MFU APIs. 
 - *Current Status*: This feature is under development. Once active, it will allow you to pull client data and transactions directly from MFU.
 
-## ⚙️ 5. Settings
+## ⚙️ 6. Settings
 
 - View your local database path.
 - **Reset Database**: (Warning) This will delete all clients and transactions.
 
-## 🛠️ 6. Advanced Configuration & Portable Build
+## 🛠️ 7. Advanced Configuration & Portable Build
 
 ### Environment Variables (.env)
 

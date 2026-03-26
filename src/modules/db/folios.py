@@ -19,3 +19,15 @@ class FolioRepository(BaseRepository):
     def get_folios_for_can(self, can_id):
         """Lists all folios registered under a particular CAN."""
         return self.run_query("SELECT * FROM folios WHERE can_id = ?", params=(int(can_id),))
+
+    def get_or_create_folio(self, can_id, folio_number, amc_name=None):
+        """Finds a folio by number and CAN, or creates it if it doesn't exist."""
+        query = "SELECT * FROM folios WHERE can_id = ? AND folio_number = ?"
+        df = self.run_query(query, params=(int(can_id), str(folio_number)))
+        
+        if not df.empty:
+            return df.iloc[0].to_dict()
+        
+        # Create new folio
+        folio_id = self.add_folio(can_id, folio_number, amc_name)
+        return {"folio_id": folio_id, "can_id": can_id, "folio_number": folio_number, "amc_name": amc_name}

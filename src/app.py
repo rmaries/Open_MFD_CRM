@@ -5,6 +5,7 @@ from ui.dashboard import render_dashboard
 from ui.client_form import input_client_details
 from ui.transaction_form import transaction_entry
 from ui.schemes_view import render_schemes_management
+from ui.mfu_import_view import show_mfu_import_view
 import shutil
 import os
 from datetime import datetime
@@ -58,7 +59,7 @@ def main():
             "Client Management": "👤",
             "Investment Tracking": "📈",
             "Scheme Management": "📋",
-            "MFU Integration": "🔗",
+            "MFU Transaction Import": "🔗",
             "User Guide": "📖",
             "Settings": "⚙️"
         }
@@ -79,9 +80,8 @@ def main():
         transaction_entry(db)
     elif choice == "Scheme Management":
         render_schemes_management(db)
-    elif choice == "MFU Integration":
-        st.header("🔗 MFU Integration")
-        st.info("MFU API Connection logic will be implemented here.")
+    elif choice == "MFU Transaction Import":
+        show_mfu_import_view(db)
     elif choice == "User Guide":
         guide_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "USER_GUIDE.md")
         if os.path.exists(guide_path):

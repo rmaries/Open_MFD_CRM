@@ -106,6 +106,7 @@ erDiagram
         string email
         string phone
         boolean kyc_status
+        string pan_card_url
         timestamp onboarding_date
     }
 
@@ -134,14 +135,33 @@ erDiagram
         float amount
         float units
         float nav_at_purchase
+        string order_number
     }
 
     SCHEMES {
         integer scheme_id PK
-        string isin_code UK
+        string scheme_code UK
+        string rta_code
         string scheme_name
         string category
         float current_nav
+    }
+
+    NOTES {
+        integer id PK
+        integer client_id FK
+        string content
+        string category
+        timestamp created_at
+    }
+
+    DOCUMENTS {
+        integer doc_id PK
+        integer client_id FK
+        string file_name
+        string file_path
+        string doc_type
+        timestamp uploaded_at
     }
 
     TASKS {

@@ -53,18 +53,20 @@ def render_schemes_management(db):
         
         if 'navs_updated' not in st.session_state:
             if not schemes_df.empty:
-                # Check if the latest NAV in DB is older than the target market date
+                # 1. Check if ANY scheme with a code is missing a NAV
+                has_missing_navs = schemes_df[schemes_df['scheme_code'].notna() & schemes_df['current_nav'].isna()].shape[0] > 0
+                
+                # 2. Check if the latest NAV in DB is older than the target market date
                 latest_db_date_val = schemes_df['last_updated'].max()
-                if isinstance(latest_db_date_val, str):
+                is_old_data = False
+                if pd.isna(latest_db_date_val):
+                    is_old_data = True
+                elif isinstance(latest_db_date_val, str):
                     if latest_db_date_val[:10] < target_date_str:
-                        needs_update = True
-                else:
-                    # In case it's not a string for some reason
+                        is_old_data = True
+                
+                if has_missing_navs or is_old_data:
                     needs_update = True
-            else:
-                # No schemes yet, maybe check anyway if we want pre-population? 
-                # Actually if no schemes, update_scheme_navs() does nothing.
-                pass
         
         if needs_update:
             with st.spinner(f"Checking for latest NAVs (Target: {target_date_str})..."):
@@ -126,6 +128,8 @@ def render_schemes_management(db):
                             if st.form_submit_button("Update Scheme"):
                                 try:
                                     db.update_scheme(scheme_id, scheme_code=new_code, rta_code=new_rta, scheme_name=new_name, category=new_cat)
+                                    if 'navs_updated' in st.session_state:
+                                        del st.session_state['navs_updated']
                                     st.success("Scheme updated!")
                                     st.rerun()
                                 except Exception as e:

@@ -17,21 +17,12 @@ class SchemaManager(BaseRepository):
     def _create_tables(self):
         """
         Creates all necessary tables in the database if they don't already exist.
-        This method ensures the foundational schema is in place.
         """
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
             
-            # Clients table: Stores information about individual clients/investors.
-            # client_id: Primary key, unique identifier for each client.
-            # name: Full name of the client.
-            # pan: Permanent Account Number, unique identifier for tax purposes.
-            # can_number: Consolidated Account Number (legacy, now moved to client_cans table).
-            # email, phone: Contact information.
-            # kyc_status: Boolean indicating if KYC (Know Your Customer) is completed.
-            # pan_card_url: URL or path to the client's PAN card document.
-            # onboarding_date: Timestamp when the client was added.
+            # Clients table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS clients (
                     client_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,12 +37,7 @@ class SchemaManager(BaseRepository):
                 )
             ''')
             
-            # Folios table: Represents investment folios, linking to CANs.
-            # folio_id: Primary key, unique identifier for each folio.
-            # can_id: Foreign key referencing the client_cans table, linking a folio to a specific CAN.
-            # folio_number: Unique identifier for the folio within an AMC.
-            # amc_name: Asset Management Company name associated with the folio.
-            # is_active: Boolean indicating if the folio is currently active.
+            # Folios table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS folios (
                     folio_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,13 +49,7 @@ class SchemaManager(BaseRepository):
                 )
             ''')
             
-            # Schemes table: Stores details about various mutual fund schemes.
-            # scheme_id: Primary key, unique identifier for each scheme.
-            # isin_code: International Securities Identification Number, unique for each scheme.
-            # scheme_name: Official name of the mutual fund scheme.
-            # category: Category of the scheme (e.g., Equity, Debt, Hybrid).
-            # current_nav: Net Asset Value per unit of the scheme.
-            # last_updated: Timestamp of the last NAV update.
+            # Schemes table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS schemes (
                     scheme_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,15 +62,7 @@ class SchemaManager(BaseRepository):
                 )
             ''')
             
-            # Transactions table: Records all investment transactions (purchase, redemption, SIP, etc.).
-            # trans_id: Primary key, unique identifier for each transaction.
-            # folio_id: Foreign key referencing the folios table, linking a transaction to a specific folio.
-            # scheme_id: Foreign key referencing the schemes table, linking a transaction to a specific scheme.
-            # date: Date of the transaction.
-            # type: Type of transaction (PURCHASE, REDEMPTION, SIP, STP, SWP).
-            # amount: Monetary amount of the transaction.
-            # units: Number of units involved in the transaction.
-            # nav_at_purchase: NAV at the time of purchase/transaction.
+            # Transactions table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS transactions (
                     trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,17 +73,13 @@ class SchemaManager(BaseRepository):
                     amount REAL,
                     units REAL,
                     nav_at_purchase REAL,
+                    order_number TEXT UNIQUE,
                     FOREIGN KEY (folio_id) REFERENCES folios (folio_id),
                     FOREIGN KEY (scheme_id) REFERENCES schemes (scheme_id)
                 )
             ''')
 
-            # Notes table: Stores general notes or remarks related to clients.
-            # id: Primary key.
-            # client_id: Foreign key referencing clients table.
-            # content: The actual text content.
-            # category: Category of the note.
-            # created_at: Timestamp.
+            # Notes table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS notes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,11 +91,7 @@ class SchemaManager(BaseRepository):
                 )
             ''')
 
-            # Tasks table: Manages tasks associated with clients.
-            # id: Primary key.
-            # client_id: Foreign key referencing clients.
-            # description: Details of the task.
-            # ...
+            # Tasks table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS tasks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,13 +104,7 @@ class SchemaManager(BaseRepository):
                 )
             ''')
 
-            # Documents table: Stores metadata about documents uploaded for clients.
-            # doc_id: Primary key, unique identifier for each document record.
-            # client_id: Foreign key referencing the clients table.
-            # file_name: Original name of the uploaded file.
-            # file_path: Storage path or URL of the document.
-            # doc_type: Category or type of the document (e.g., "KYC", "Agreement", "Statement").
-            # uploaded_at: Timestamp when the document record was created.
+            # Documents table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS documents (
                     doc_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -159,12 +117,7 @@ class SchemaManager(BaseRepository):
                 )
             ''')
 
-            # Client CANs table: Manages multiple Consolidated Account Numbers (CANs) per client.
-            # id: Primary key, unique identifier for each CAN record.
-            # client_id: Foreign key referencing the clients table, linking a CAN to a specific client.
-            # can_number: The actual CAN number.
-            # can_description: Optional label or context for this CAN (e.g., "Primary", "Joint Holder").
-            # created_at: Timestamp when the CAN record was created.
+            # Client CANs table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS client_cans (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -182,12 +135,9 @@ class SchemaManager(BaseRepository):
 
     def _run_migrations(self):
         """
-        Executes one-time schema migrations to update the database structure
-        or data based on application evolution.
+        Executes one-time schema migrations.
         These migrations are designed to be idempotent.
         """
-        self._migrate_cans_to_table()
-        self._migrate_folios_to_cans()
         self._migrate_cans_to_table()
         self._migrate_folios_to_cans()
         self._revert_notes_tasks_linkage()
@@ -195,6 +145,7 @@ class SchemaManager(BaseRepository):
         self._enforce_can_uniqueness()
         self._rename_isin_code_to_scheme_code()
         self._add_rta_code_to_schemes()
+        self._add_order_number_to_transactions()
 
     def _add_can_description_to_client_cans(self):
         """Adds can_description column to client_cans table if it doesn't exist."""
@@ -212,16 +163,12 @@ class SchemaManager(BaseRepository):
     def _migrate_cans_to_table(self):
         """
         Migration: Moves legacy CAN numbers from the 'clients' table into the new 'client_cans' table.
-        This ensures that CANs are managed as separate entities, allowing for multiple CANs per client.
-        It runs only if the client_cans table is empty, preventing duplicate entries on subsequent runs.
         """
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
-            # Check if the client_cans table is empty to ensure idempotency
             cursor.execute("SELECT count(*) FROM client_cans")
             if cursor.fetchone()[0] == 0:
-                # Select client_id and can_number from clients where can_number exists
                 cursor.execute("SELECT client_id, can_number FROM clients WHERE can_number IS NOT NULL AND can_number != ''")
                 existing_cans = cursor.fetchall()
                 for client_id, can in existing_cans:
@@ -231,7 +178,7 @@ class SchemaManager(BaseRepository):
             conn.close()
 
     def _migrate_folios_to_cans(self):
-        """Adjusts folios table to link to CANs instead of directly to Clients if necessary."""
+        """Adjusts folios table to link to CANs instead of directly to Clients."""
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
@@ -239,7 +186,6 @@ class SchemaManager(BaseRepository):
             folio_cols = [row[1] for row in cursor.fetchall()]
             
             if 'client_id' in folio_cols and 'can_id' not in folio_cols:
-                # This logic replicates the original migration in database.py
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS folios_new (
                         folio_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -265,7 +211,7 @@ class SchemaManager(BaseRepository):
             conn.close()
 
     def _revert_notes_tasks_linkage(self):
-        """Reverts notes and tasks tables to link only to clients, removing can_id."""
+        """Reverts notes and tasks tables to link only to clients."""
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
@@ -274,14 +220,11 @@ class SchemaManager(BaseRepository):
             cursor.execute("PRAGMA table_info(notes)")
             columns = [row[1] for row in cursor.fetchall()]
             if 'can_id' in columns:
-                # Migrate any CAN-linked records to their client parent first
                 cursor.execute("""
                     UPDATE notes 
                     SET client_id = (SELECT client_id FROM client_cans WHERE id = notes.can_id)
                     WHERE client_id IS NULL AND can_id IS NOT NULL
                 """)
-                
-                # Recreate table without can_id
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS notes_new (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -303,14 +246,11 @@ class SchemaManager(BaseRepository):
             cursor.execute("PRAGMA table_info(tasks)")
             columns = [row[1] for row in cursor.fetchall()]
             if 'can_id' in columns:
-                # Migrate any CAN-linked records to their client parent first
                 cursor.execute("""
                     UPDATE tasks 
                     SET client_id = (SELECT client_id FROM client_cans WHERE id = tasks.can_id)
                     WHERE client_id IS NULL AND can_id IS NOT NULL
                 """)
-                
-                # Recreate table without can_id
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS tasks_new (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -334,22 +274,15 @@ class SchemaManager(BaseRepository):
             conn.close()
 
     def _enforce_can_uniqueness(self):
-        """
-        Migration: Enforces uniqueness on can_number in client_cans table.
-        It deduplicates existing entries and recreates the table with a UNIQUE constraint if not already present.
-        """
+        """Enforces uniqueness on can_number in client_cans table."""
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
-            
-            # 1. Check if UNIQUE constraint already exists
             cursor.execute("PRAGMA index_list(client_cans)")
             indexes = cursor.fetchall()
-            # index[2] is 'unique' boolean in SQLite
             has_unique = any(idx[2] == 1 for idx in indexes) 
             
             if not has_unique:
-                # 2. Deduplicate: remove duplicate CANs, keeping the first one added (lowest ID)
                 cursor.execute("""
                     DELETE FROM client_cans 
                     WHERE id NOT IN (
@@ -358,8 +291,6 @@ class SchemaManager(BaseRepository):
                         GROUP BY can_number
                     )
                 """)
-                
-                # 3. Recreate table with UNIQUE constraint
                 cursor.execute("ALTER TABLE client_cans RENAME TO client_cans_old")
                 cursor.execute('''
                     CREATE TABLE client_cans (
@@ -389,33 +320,29 @@ class SchemaManager(BaseRepository):
             columns = [row[1] for row in cursor.fetchall()]
             
             if 'isin_code' in columns and 'scheme_code' not in columns:
-                import sqlite3
-                try:
-                    cursor.execute("ALTER TABLE schemes RENAME COLUMN isin_code TO scheme_code")
-                except sqlite3.OperationalError:
-                    # Fallback for older SQLite versions
-                    cursor.execute("ALTER TABLE schemes RENAME TO schemes_old")
-                    cursor.execute('''
-                        CREATE TABLE schemes (
-                            scheme_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            scheme_code TEXT UNIQUE,
-                            scheme_name TEXT NOT NULL,
-                            category TEXT,
-                            current_nav REAL,
-                            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )
-                    ''')
-                    cursor.execute('''
-                        INSERT INTO schemes (scheme_id, scheme_code, scheme_name, category, current_nav, last_updated)
-                        SELECT scheme_id, isin_code, scheme_name, category, current_nav, last_updated FROM schemes_old
-                    ''')
-                    cursor.execute("DROP TABLE schemes_old")
+                cursor.execute("ALTER TABLE schemes RENAME TO schemes_old")
+                cursor.execute('''
+                    CREATE TABLE schemes (
+                        scheme_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        scheme_code TEXT UNIQUE,
+                        rta_code TEXT,
+                        scheme_name TEXT NOT NULL,
+                        category TEXT,
+                        current_nav REAL,
+                        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cursor.execute('''
+                    INSERT INTO schemes (scheme_id, scheme_code, scheme_name, category, current_nav, last_updated)
+                    SELECT scheme_id, isin_code, scheme_name, category, current_nav, last_updated FROM schemes_old
+                ''')
+                cursor.execute("DROP TABLE schemes_old")
                 conn.commit()
         finally:
             conn.close()
 
     def _add_rta_code_to_schemes(self):
-        """Migration: Adds rta_code column to schemes table if it doesn't exist."""
+        """Migration: Adds rta_code column to schemes table."""
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
@@ -423,6 +350,19 @@ class SchemaManager(BaseRepository):
             columns = [row[1] for row in cursor.fetchall()]
             if 'rta_code' not in columns:
                 cursor.execute("ALTER TABLE schemes ADD COLUMN rta_code TEXT")
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _add_order_number_to_transactions(self):
+        """Migration: Adds order_number column to transactions table."""
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(transactions)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'order_number' not in columns:
+                cursor.execute("ALTER TABLE transactions ADD COLUMN order_number TEXT")
             conn.commit()
         finally:
             conn.close()
