@@ -94,13 +94,14 @@ def render_schemes_management(db):
             # Rename columns for better display
             display_df = schemes_df.rename(columns={
                 'scheme_code': 'Scheme Code',
+                'rta_code': 'RTA Code',
                 'scheme_name': 'Scheme Name',
                 'category': 'Category',
                 'current_nav': nav_header
             })
             
             # Only show relevant columns
-            cols_to_show = ['Scheme Code', 'Scheme Name', 'Category', nav_header]
+            cols_to_show = ['Scheme Code', 'RTA Code', 'Scheme Name', 'Category', nav_header]
             st.dataframe(display_df[cols_to_show], width='stretch', hide_index=True)
             
             # --- Edit/Delete Section ---
@@ -116,6 +117,7 @@ def render_schemes_management(db):
                 with st.expander(f"Edit/Delete: {selected_scheme_name}", expanded=True):
                     with st.form(f"edit_scheme_{scheme_id}"):
                         new_code = st.text_input("Scheme Code", value=scheme_row['Scheme Code'])
+                        new_rta = st.text_input("RTA Code", value=scheme_row['RTA Code'] if pd.notna(scheme_row['RTA Code']) else "")
                         new_name = st.text_input("Scheme Name", value=scheme_row['Scheme Name'])
                         new_cat = st.text_input("Category", value=scheme_row['Category'])
                         
@@ -123,7 +125,7 @@ def render_schemes_management(db):
                         with col1:
                             if st.form_submit_button("Update Scheme"):
                                 try:
-                                    db.update_scheme(scheme_id, scheme_code=new_code, scheme_name=new_name, category=new_cat)
+                                    db.update_scheme(scheme_id, scheme_code=new_code, rta_code=new_rta, scheme_name=new_name, category=new_cat)
                                     st.success("Scheme updated!")
                                     st.rerun()
                                 except Exception as e:
@@ -150,6 +152,7 @@ def render_schemes_management(db):
             col1, col2 = st.columns(2)
             with col1:
                 scheme_code = st.text_input("Scheme Code (e.g., ISIN)", help="Unique identifier for the scheme")
+                rta_code = st.text_input("RTA Code (e.g., FEGPG)", help="RTA specific code")
                 scheme_name = st.text_input("Scheme Name")
             with col2:
                 category = st.text_input("Category (e.g., Equity, Debt)")
@@ -161,7 +164,7 @@ def render_schemes_management(db):
                     st.error("Scheme Code and Scheme Name are required.")
                 else:
                     try:
-                        db.add_scheme(scheme_code, scheme_name, category, current_nav)
+                        db.add_scheme(scheme_code, scheme_name, category, current_nav, rta_code=rta_code)
                         st.success(f"Scheme '{scheme_name}' added successfully!")
                         st.rerun()
                     except Exception as e:
@@ -172,8 +175,8 @@ def render_schemes_management(db):
         st.write("Upload a CSV or Excel file to import multiple schemes at once.")
         
         # Download template
-        template_data = pd.DataFrame(columns=['scheme_code', 'scheme_name', 'category', 'current_nav'])
-        template_data.loc[0] = ['INF209K01157', 'HDFC Top 100 Fund', 'Equity', 100.55]
+        template_data = pd.DataFrame(columns=['scheme_code', 'rta_code', 'scheme_name', 'category', 'current_nav'])
+        template_data.loc[0] = ['INF209K01157', 'H1', 'HDFC Top 100 Fund', 'Equity', 100.55]
         
         csv_template = template_data.to_csv(index=False).encode('utf-8')
         st.download_button(

@@ -74,6 +74,7 @@ class SchemaManager(BaseRepository):
                 CREATE TABLE IF NOT EXISTS schemes (
                     scheme_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     scheme_code TEXT UNIQUE,
+                    rta_code TEXT,
                     scheme_name TEXT NOT NULL,
                     category TEXT,
                     current_nav REAL,
@@ -193,6 +194,7 @@ class SchemaManager(BaseRepository):
         self._add_can_description_to_client_cans()
         self._enforce_can_uniqueness()
         self._rename_isin_code_to_scheme_code()
+        self._add_rta_code_to_schemes()
 
     def _add_can_description_to_client_cans(self):
         """Adds can_description column to client_cans table if it doesn't exist."""
@@ -409,5 +411,18 @@ class SchemaManager(BaseRepository):
                     ''')
                     cursor.execute("DROP TABLE schemes_old")
                 conn.commit()
+        finally:
+            conn.close()
+
+    def _add_rta_code_to_schemes(self):
+        """Migration: Adds rta_code column to schemes table if it doesn't exist."""
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(schemes)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'rta_code' not in columns:
+                cursor.execute("ALTER TABLE schemes ADD COLUMN rta_code TEXT")
+            conn.commit()
         finally:
             conn.close()

@@ -13,7 +13,7 @@ class SchemeRepository(BaseRepository):
     def __init__(self, db_path: str, **kwargs):
         BaseRepository.__init__(self, db_path)
 
-    def add_scheme(self, scheme_code, scheme_name, category=None, current_nav=None):
+    def add_scheme(self, scheme_code, scheme_name, category=None, current_nav=None, rta_code=None):
         """Adds a new scheme to the database. Always attempts to fetch latest NAV from AMFI."""
         
         last_updated = None
@@ -29,14 +29,14 @@ class SchemeRepository(BaseRepository):
             logger.error(f"Failed to fetch NAV from AMFI for {scheme_code}: {e}")
 
         query = '''
-            INSERT INTO schemes (scheme_code, scheme_name, category, current_nav, last_updated)
-            VALUES (?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
+            INSERT INTO schemes (scheme_code, rta_code, scheme_name, category, current_nav, last_updated)
+            VALUES (?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))
         '''
         conn = self.get_connection()
         try:
             with conn:
                 cursor = conn.cursor()
-                cursor.execute(query, (scheme_code, scheme_name, category, current_nav, last_updated))
+                cursor.execute(query, (scheme_code, rta_code, scheme_name, category, current_nav, last_updated))
                 return cursor.lastrowid
         except sqlite3.IntegrityError as e:
             if "UNIQUE constraint failed: schemes.scheme_code" in str(e):
@@ -58,9 +58,10 @@ class SchemeRepository(BaseRepository):
             return 0
 
         query = '''
-            INSERT INTO schemes (scheme_code, scheme_name, category, current_nav)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO schemes (scheme_code, rta_code, scheme_name, category, current_nav)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(scheme_code) DO UPDATE SET
+                rta_code = COALESCE(excluded.rta_code, schemes.rta_code),
                 scheme_name = excluded.scheme_name,
                 category = COALESCE(excluded.category, schemes.category),
                 current_nav = COALESCE(excluded.current_nav, schemes.current_nav),
@@ -74,6 +75,7 @@ class SchemeRepository(BaseRepository):
                 for _, row in df.iterrows():
                     conn.execute(query, (
                         str(row['scheme_code']),
+                        str(row['rta_code']) if 'rta_code' in row and pd.notna(row['rta_code']) else None,
                         str(row['scheme_name']),
                         str(row['category']) if 'category' in row and pd.notna(row['category']) else None,
                         float(row['current_nav']) if 'current_nav' in row and pd.notna(row['current_nav']) else None
@@ -126,6 +128,7 @@ class SchemeRepository(BaseRepository):
 
     def delete_scheme(self, scheme_id):
         """Deletes a scheme from the database."""
+        scheme_id = int(scheme_id)
         query = 'DELETE FROM schemes WHERE scheme_id = ?'
         conn = self.get_connection()
         try:
@@ -136,17 +139,21 @@ class SchemeRepository(BaseRepository):
         finally:
             conn.close()
 
-    def update_scheme(self, scheme_id, scheme_code=None, scheme_name=None, category=None):
+    def update_scheme(self, scheme_id, scheme_code=None, rta_code=None, scheme_name=None, category=None):
         """Updates scheme details."""
+        scheme_id = int(scheme_id)
         updates = []
         params = []
-        if scheme_code:
+        if scheme_code is not None:
             updates.append("scheme_code = ?")
             params.append(scheme_code)
-        if scheme_name:
+        if rta_code is not None:
+            updates.append("rta_code = ?")
+            params.append(rta_code)
+        if scheme_name is not None:
             updates.append("scheme_name = ?")
             params.append(scheme_name)
-        if category:
+        if category is not None:
             updates.append("category = ?")
             params.append(category)
             
