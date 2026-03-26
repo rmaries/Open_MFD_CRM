@@ -1,0 +1,881 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open-source CRM and Transaction Management tool for Mutual Fund Distributors in India.">
+      
+      
+        <meta name="author" content="rmaries">
+      
+      
+        <link rel="canonical" href="https://rmaries.github.io/open_mfd_crm/user-guide/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../developer-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>User Guide - Open-MFD CRM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#open-mfd-crm-user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Open-MFD CRM" class="md-header__button md-logo" aria-label="Open-MFD CRM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Open-MFD CRM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Open-MFD CRM" class="md-nav__button md-logo" aria-label="Open-MFD CRM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Open-MFD CRM
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🚀 Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📊 1. Dashboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 1. Dashboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#distributor-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📊 Distributor Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        👤 Client Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-client-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        👤 2. Client Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="👤 2. Client Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        👤 Manual Entry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bulk-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📁 Bulk Import
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-investment-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📈 3. Investment Tracking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-scheme-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📈 4. Scheme Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-mfu-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔗 5. MFU Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚙️ 6. Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-advanced-configuration-portable-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛠️ 7. Advanced Configuration &amp; Portable Build
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🛠️ 7. Advanced Configuration &amp; Portable Build">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables (.env)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#portable-distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Portable Distribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-leadership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        👑 Project Leadership
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="open-mfd-crm-user-guide">Open-MFD CRM User Guide</h1>
+<p>Welcome to the Open-MFD CRM. This tool is designed to help Mutual Fund Distributors (MFDs) manage their clients, track investments, and integrate with MFU (Mutual Fund Utilities) seamlessly.</p>
+<h2 id="getting-started">🚀 Getting Started</h2>
+<p>The tool runs in your web browser. When you launch it, you will see a side navigation menu to switch between different sections.</p>
+<h2 id="1-dashboard">📊 1. Dashboard</h2>
+<p>The Dashboard is your command center, now organized into two primary tabs for better clarity.</p>
+<h3 id="distributor-overview">📊 Distributor Overview</h3>
+<p>This tab gives you an eagle-eye view of your entire business.</p>
+<ul>
+<li><strong>Key Metrics</strong>: View your <strong>Total AUM</strong>, <strong>Active Clients</strong> count, <strong>SIP Book</strong>, and <strong>Overdue Tasks</strong> count at a glance.</li>
+<li>
+<p><strong>Tasks Overview</strong>: Manage all your actions in one place:</p>
+<ul>
+<li><strong>⚠️ Overdue Tasks</strong>: Lists tasks past their due date across all clients.</li>
+<li><strong>🕒 Current Tasks</strong>: Displays all 'Pending' and 'In Progress' tasks.</li>
+<li><strong>Interactive Updates</strong>: You can update task statuses (e.g., from 'Pending' to 'Completed') directly from these tables. The associated client name is shown for each task.</li>
+</ul>
+</li>
+</ul>
+<h3 id="client-overview">👤 Client Overview</h3>
+<p>This tab is dedicated to deep-diving into individual client profiles.</p>
+<ol>
+<li><strong>Your Clients Table</strong>: A summary table listing your onboarded clients with their <strong>Name</strong>, <strong>PAN</strong>, <strong>Mobile Number</strong>, and <strong>Email ID</strong>. The table displays up to 5 clients at a time for better readability.</li>
+<li><strong>Client Selection</strong>: Select a client by clicking their name directly in the table, or use the searchable dropdown below the table for a detailed view.</li>
+<li>
+<p><strong>Portfolio &amp; Interaction Center</strong>:</p>
+<ul>
+<li>
+<p><strong>Portfolio &amp; CANs</strong>: View metrics like Net Investment, Total Gain, XIRR, and detailed holdings.</p>
+<ul>
+<li>
+<p><strong>Transaction Management</strong>: Click on any transaction row in the portfolio table to edit its details (e.g., date, amount, NAV) or delete it entirely.</p>
+</li>
+<li>
+<p><strong>CAN Selection / Management</strong>: Use the dropdown below the PAN to:</p>
+<ul>
+<li>View the total aggregate portfolio ("ALL Folios").</li>
+<li>Filter holdings by a specific CAN.</li>
+<li><strong>➕ Add New CAN</strong>: Register a new CAN for the client directly from the dropdown.</li>
+<li><strong>⚙️ Manage CANs</strong>: View and delete existing CANs.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Notes</strong>: A dedicated space for meeting logs.</p>
+</li>
+<li><strong>Tasks</strong>: Create and track investor-specific actions. (Updates here are synced with the Distributor Overview).</li>
+<li><strong>Documents</strong>: Manage client files.</li>
+<li><strong>Deleting a Client Profile</strong>:</li>
+<li>To permanently remove a client, expand the <strong>"📝 Edit Client Profile"</strong> section.</li>
+<li>Scroll to the bottom to find the <strong>"⚠️ Dangerous Zone"</strong>.</li>
+<li>Check the box <strong>"I understand that this action is permanent and irreversible"</strong>.</li>
+<li>Click <strong>"🗑️ Delete Client Profile"</strong>. This will delete all their CANs, folios, transactions, notes, tasks, and documents.</li>
+</ul>
+</li>
+</ol>
+<h2 id="2-client-management">👤 2. Client Management</h2>
+<p>Use this section to onboard new clients. You can choose between <strong>Manual Entry</strong> for individual clients or <strong>Bulk Import</strong> for mass onboarding.</p>
+<h3 id="manual-entry">👤 Manual Entry</h3>
+<p>Onboard clients one-by-one by filling out the form:</p>
+<ul>
+<li><strong>Full Name *</strong>: Enter the name as it appears in records.</li>
+<li><strong>Phone Number *</strong>: Mobile or landline contact.</li>
+<li><strong>PAN</strong>: (Optional) 10-character Permanent Account Number.</li>
+<li><strong>Email</strong>: (Optional) Contact email address.</li>
+<li><strong>MFU CAN</strong>: (Optional) Common Account Number.</li>
+<li><strong>Submit</strong>: Click "Onboard Client" to save.</li>
+</ul>
+<h3 id="bulk-import">📁 Bulk Import</h3>
+<p>Mass onboard clients using Excel, CSV, or ODS files.</p>
+<ol>
+<li><strong>Download Template</strong>: Click <strong>"📥 Download Template Excel"</strong> to get a pre-formatted file with the correct headers.</li>
+<li>
+<p><strong>Prepare Your Data</strong>:</p>
+<ul>
+<li><strong>Name *</strong> and <strong>Phone *</strong> are mandatory for every row.</li>
+<li>Optional fields include <strong>PAN</strong>, <strong>Email</strong>, and <strong>MFU CAN</strong>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Upload File</strong>: Drag and drop or browse for your file (supports <code>.xlsx</code>, <code>.csv</code>, <code>.ods</code>).</p>
+</li>
+<li><strong>Preview &amp; Process</strong>: Review the preview of the first few rows, then click <strong>"🚀 Process Bulk Import"</strong>.</li>
+<li><strong>Review Results</strong>: The system will report how many clients were added and list any errors (e.g., missing data or duplicate PANs) found in specific rows.</li>
+</ol>
+<p><em>* Required fields for onboarding.</em></p>
+<h2 id="3-investment-tracking">📈 3. Investment Tracking</h2>
+<p>This section allows you to record physical or digital transactions.</p>
+<ol>
+<li><strong>Select Client</strong>: Choose from the list of onboarded clients.</li>
+<li>
+<p><strong>Folio Management</strong>:</p>
+<ul>
+<li>Select an existing folio or click <strong>"Add New Folio"</strong>.</li>
+<li>For new folios, provide the Folio Number and the AMC Name (e.g., SBI Mutual Fund).</li>
+</ul>
+</li>
+<li>
+<p><strong>Record Transaction</strong>:</p>
+<ul>
+<li><strong>Scheme</strong>: Select the mutual fund scheme.</li>
+<li><strong>Transaction Type</strong>: Choose from PURCHASE, REDEMPTION, SIP, STP, SWP.</li>
+<li><strong>Amount/NAV</strong>: Enter the transaction amount. The NAV is automatically fetched from AMFI based on the transaction date and smartly updated, but you can override it if needed.</li>
+<li><strong>Submit</strong>: Click "Submit Transaction" to update the portfolio.</li>
+</ul>
+</li>
+</ol>
+<h2 id="4-scheme-management">📈 4. Scheme Management</h2>
+<p>This dedicated section helps you manage mutual fund schemes efficiently:
+- <strong>Smart NAV Updates</strong>: Automatically fetche the latest NAVs directly from AMFI, avoiding redundant calls.
+- <strong>Edit/Delete Schemes</strong>: Directly modify or remove existing schemes from your database.
+- <strong>RTA Code Mapping</strong>: Mutual fund schemes now store RTA codes to facilitate automated transaction imports from MFU statements.</p>
+<h2 id="5-mfu-integration">🔗 5. MFU Integration</h2>
+<p>This section is dedicated to connecting with MFU APIs. 
+- <em>Current Status</em>: This feature is under development. Once active, it will allow you to pull client data and transactions directly from MFU.</p>
+<h2 id="6-settings">⚙️ 6. Settings</h2>
+<ul>
+<li>View your local database path.</li>
+<li><strong>Reset Database</strong>: (Warning) This will delete all clients and transactions.</li>
+</ul>
+<h2 id="7-advanced-configuration-portable-build">🛠️ 7. Advanced Configuration &amp; Portable Build</h2>
+<h3 id="environment-variables-env">Environment Variables (.env)</h3>
+<p>You can customize the application behavior using the <code>.env</code> file in the root directory:</p>
+<ul>
+<li><code>DB_PATH</code>: Specify a custom database file (e.g., <code>DB_PATH=test_scalability.db</code>).</li>
+<li><code>MFU_API_KEY</code>: Your credentials for future MFU integration.</li>
+</ul>
+<h3 id="portable-distribution">Portable Distribution</h3>
+<p>To create a "no-install" version of the CRM for another computer:</p>
+<ol>
+<li>Run <code>python build_scripts/build_windows.py</code>.</li>
+<li>Find the generated ZIP file in the <code>dist/</code> folder.</li>
+<li>Extract and run <code>Start_CRM.bat</code> on any Windows PC.</li>
+</ol>
+<hr />
+<h2 id="project-leadership">👑 Project Leadership</h2>
+<p>This is an open-source project led by its <strong>BDFL (Benevolent Dictator For Life)</strong>, <strong>@rmaries</strong>. </p>
+<p>For support, contributions, or feature requests, please visit the <a href="https://github.com/rmaries/Open_MFD_CRM">GitHub repository</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.code.copy", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
