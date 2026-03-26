@@ -1,6 +1,38 @@
 import streamlit as st
 import pandas as pd
 import io
+from datetime import datetime, timedelta
+
+def get_target_nav_date():
+    """
+    Determines the date for which the latest NAV should be available.
+    Considers weekends and the ~9 PM update window for Indian Mutual Funds.
+    """
+    now = datetime.now()
+    # Weekday: 0=Mon, ..., 4=Fri, 5=Sat, 6=Sun
+    weekday = now.weekday()
+    
+    # Heuristic: AMFI updates usually happen by 9 PM IST for the current day.
+    # Before 9 PM, we expect the previous working day's NAV.
+    # After 9 PM, we expect today's NAV (if it's a working day).
+    
+    if weekday == 5: # Saturday
+        # Expected is Friday
+        return (now - timedelta(days=1)).date()
+    elif weekday == 6: # Sunday
+        # Expected is Friday
+        return (now - timedelta(days=2)).date()
+    elif weekday == 0: # Monday
+        if now.hour < 21:
+            return (now - timedelta(days=3)).date() # Previous Friday
+        else:
+            return now.date()
+    else: # Tue-Fri
+        if now.hour < 21:
+            return (now - timedelta(days=1)).date()
+        else:
+            return now.date()
+
 
 def render_schemes_management(db):
     st.header("📋 Scheme Management")
@@ -11,23 +43,31 @@ def render_schemes_management(db):
     with tabs[0]:
         st.subheader("Current Schemes")
         
-        # Auto-update NAVs if not done in this session or if data is old
+        # Auto-update NAVs if data is old. Skip if already updated in this session
+        # or if the current DB data is already up-to-date for the target market date.
         schemes_df = db.get_all_schemes()
         needs_update = False
         
-        from datetime import datetime
-        today_str = datetime.now().strftime("%Y-%m-%d")
+        target_date = get_target_nav_date()
+        target_date_str = target_date.strftime("%Y-%m-%d")
         
         if 'navs_updated' not in st.session_state:
-            needs_update = True
-        elif not schemes_df.empty:
-            # Check if any scheme was NOT updated today
-            latest_db_date = schemes_df['last_updated'].max()
-            if isinstance(latest_db_date, str) and latest_db_date[:10] < today_str:
-                needs_update = True
+            if not schemes_df.empty:
+                # Check if the latest NAV in DB is older than the target market date
+                latest_db_date_val = schemes_df['last_updated'].max()
+                if isinstance(latest_db_date_val, str):
+                    if latest_db_date_val[:10] < target_date_str:
+                        needs_update = True
+                else:
+                    # In case it's not a string for some reason
+                    needs_update = True
+            else:
+                # No schemes yet, maybe check anyway if we want pre-population? 
+                # Actually if no schemes, update_scheme_navs() does nothing.
+                pass
         
         if needs_update:
-            with st.spinner("Checking for latest NAVs from AMFI..."):
+            with st.spinner(f"Checking for latest NAVs (Target: {target_date_str})..."):
                 try:
                     updated = db.update_scheme_navs()
                     if updated > 0:
@@ -36,6 +76,7 @@ def render_schemes_management(db):
                     st.session_state.navs_updated = True
                 except Exception as e:
                     st.error(f"Failed to update NAVs: {e}")
+        
         if not schemes_df.empty:
             # Get the most recent date from the schemes to show in header
             # last_updated might be string or datetime
