@@ -31,4 +31,4 @@ This project follows the **BDFL (Benevolent Dictator For Life)** model. All fina
 
 ## 🛡️ License
 
-By contributing to Open-MFD CRM, you agree that your contributions will be licensed under the project's open-source license.
+By contributing to Open-MFD CRM, you agree that your contributions will be licensed under the project's open-source license given in [LICENSE](https://github.com/rmaries/Open_MFD_CRM/blob/main/LICENSE).
